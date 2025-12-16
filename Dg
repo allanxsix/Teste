@@ -545,16 +545,12 @@ task.spawn(function()
 end)
 
 -- =====================================================
--- ABA CASTELO INFERNAL (UI)
+-- CASTELO INFERNAL - UI (CORRIGIDO)
 -- =====================================================
-Tabs.Castle = Tabs.Castle or Window:AddTab({
-    Title = "Castelo Infernal",
-    Icon = "flame"
-})
 
 Tabs.Castle:AddInput("CastleEntryFloor", {
     Title = "Andar de Entrada",
-    Default = tostring(entryFloor),
+    Default = "125",
     Numeric = true,
     Finished = true,
     Flag = "CastleEntryFloor",
@@ -565,7 +561,7 @@ Tabs.Castle:AddInput("CastleEntryFloor", {
 
 Tabs.Castle:AddInput("CastleResetFloor", {
     Title = "Andar de Reset",
-    Default = tostring(resetFloor),
+    Default = "200",
     Numeric = true,
     Finished = true,
     Flag = "CastleResetFloor",
@@ -576,6 +572,7 @@ Tabs.Castle:AddInput("CastleResetFloor", {
 
 Tabs.Castle:AddToggle("CastleINF", {
     Title = "Castle INF (Farm + Portal)",
+    Default = false,
     Flag = "CastleINF",
     Callback = function(v)
         castleInfEnabled = v
@@ -584,6 +581,7 @@ Tabs.Castle:AddToggle("CastleINF", {
 
 Tabs.Castle:AddToggle("AutoCastle", {
     Title = "Auto Castle (Create + Reset)",
+    Default = false,
     Flag = "AutoCastle",
     Callback = function(v)
         castleEnabled = v
@@ -592,6 +590,7 @@ Tabs.Castle:AddToggle("AutoCastle", {
 
 Tabs.Castle:AddToggle("CastleCreateOnly", {
     Title = "Auto Castle (Criar Apenas)",
+    Default = false,
     Flag = "CastleCreateOnly",
     Callback = function(v)
         castleCreateOnlyEnabled = v
@@ -610,6 +609,7 @@ Tabs.Castle:AddDropdown("CastleSpeed", {
 
 Tabs.Castle:AddToggle("CastleSpeedEnabled", {
     Title = "Ativar Speed do Castelo",
+    Default = false,
     Flag = "CastleSpeedEnabled",
     Callback = function(v)
         castleSpeedEnabled = v
