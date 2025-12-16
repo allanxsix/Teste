@@ -18,21 +18,21 @@ local Remote = ReplicatedStorage.BridgeNet2.dataRemoteEvent
 -- FLUENT + SAVE
 -- =====================================================
 local Fluent = loadstring(game:HttpGet(
-    "https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"
+"https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"
 ))()
 
 local SaveManager = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"
+"https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"
 ))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Allan Hub",
-    SubTitle = "Auto Dungeon + Auto Rebirth",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(540, 420),
-    Acrylic = true,
-    Theme = "dark",
-    MinimizeKey = Enum.KeyCode.End
+Title = "Allan Hub",
+SubTitle = "Auto Dungeon + Auto Rebirth",
+TabWidth = 160,
+Size = UDim2.fromOffset(540, 420),
+Acrylic = true,
+Theme = "dark",
+MinimizeKey = Enum.KeyCode.End
 })
 
 SaveManager:SetLibrary(Fluent)
@@ -42,69 +42,57 @@ SaveManager:SetFolder("AllanHub")
 -- TABS
 -- =====================================================
 local Tabs = {
-    Dungeon = Window:AddTab({ 
-        Title = "Dungeon", 
-        Icon = "swords" 
-    }),
-
-    Castle = Window:AddTab({ 
-        Title = "Castelo Infernal", 
-        Icon = "flame" 
-    }),
-
-    Settings = Window:AddTab({ 
-        Title = "Settings", 
-        Icon = "settings" 
-    })
+Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "swords" }),
+Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
 -- =====================================================
 -- CONFIG (PERSISTENTE)
 -- =====================================================
 local Config = {
-    AutoFarm = false,
-    AutoBuyTicket = false,
-    MoveMode = "Tween",
-    AutoRebirth = false
+AutoFarm = false,
+AutoBuyTicket = false,
+MoveMode = "Tween",
+AutoRebirth = false
 }
 
 -- =====================================================
 -- UI (FLAGS = SALVO)
 -- =====================================================
 Tabs.Dungeon:AddToggle("AutoFarm", {
-    Title = "Auto Farm Dungeon",
-    Default = false,
-    Flag = "AutoFarmDungeon",
-    Callback = function(v) Config.AutoFarm = v end
+Title = "Auto Farm Dungeon",
+Default = false,
+Flag = "AutoFarmDungeon",
+Callback = function(v) Config.AutoFarm = v end
 })
 
 Tabs.Dungeon:AddToggle("AutoBuy", {
-    Title = "Auto Buy Ticket",
-    Default = false,
-    Flag = "AutoBuyTicket",
-    Callback = function(v) Config.AutoBuyTicket = v end
+Title = "Auto Buy Ticket",
+Default = false,
+Flag = "AutoBuyTicket",
+Callback = function(v) Config.AutoBuyTicket = v end
 })
 
 Tabs.Dungeon:AddDropdown("MoveMode", {
-    Title = "Movement Mode",
-    Values = { "Tween", "Teleport" },
-    Default = "Tween",
-    Flag = "MoveMode",
-    Callback = function(v) Config.MoveMode = v end
+Title = "Movement Mode",
+Values = { "Tween", "Teleport" },
+Default = "Tween",
+Flag = "MoveMode",
+Callback = function(v) Config.MoveMode = v end
 })
 Tabs.Dungeon:AddToggle("AutoRebirth", {
-    Title = "Auto Renascimento",
-    Description = "Rebirth + PlayerExp + ShadowRange automático",
-    Default = false,
-    Flag = "AutoRebirth",
-    Callback = function(value)
-        Config.AutoRebirth = value
-    end
+Title = "Auto Renascimento",
+Description = "Rebirth + PlayerExp + ShadowRange automático",
+Default = false,
+Flag = "AutoRebirth",
+Callback = function(value)
+Config.AutoRebirth = value
+end
 })
 
 local Status = Tabs.Dungeon:AddParagraph({
-    Title = "Status",
-    Content = "Idle"
+Title = "Status",
+Content = "Idle"
 })
 
 SaveManager:BuildConfigSection(Tabs.Settings)
@@ -123,52 +111,53 @@ local currentTween = nil
 -- BUY TICKET
 -- =====================================================
 local function BuyTicket()
-    Remote:FireServer(unpack({
-        [1] = {
-            [1] = { Event = "DungeonAction", Action = "BuyTicket" },
-            [2] = "\4"
-        }
-    }))
+Remote:FireServer(unpack({
+[1] = {
+[1] = { Event = "DungeonAction", Action = "BuyTicket" },
+[2] = "\4"
+}
+}))
 end
 
 -- =====================================================
 -- CREATE + START DUNGEON
 -- =====================================================
 local function CreateDungeon()
-    if Creating or StartingDungeon then return end
+if Creating or StartingDungeon then return end
 
-    Creating = true
-    StartingDungeon = true
-    Status:SetDesc("Creating Dungeon")
+Creating = true  
+StartingDungeon = true  
+Status:SetDesc("Creating Dungeon")  
 
-    if Config.AutoBuyTicket then
-        BuyTicket()
-        task.wait(1.2)
-    end
+if Config.AutoBuyTicket then  
+    BuyTicket()  
+    task.wait(1.2)  
+end  
 
-    Remote:FireServer(unpack({
-        [1] = {
-            [1] = { Event = "DungeonAction", Action = "Create" },
-            [2] = "\4"
-        }
-    }))
+Remote:FireServer(unpack({  
+    [1] = {  
+        [1] = { Event = "DungeonAction", Action = "Create" },  
+        [2] = "\4"  
+    }  
+}))  
 
-    task.wait(2)
+task.wait(2)  
 
-    Remote:FireServer(unpack({
-        [1] = {
-            [1] = {
-                Event = "DungeonAction",
-                Action = "Start",
-                Dungeon = Player.UserId
-            },
-            [2] = "\4"
-        }
-    }))
+Remote:FireServer(unpack({  
+    [1] = {  
+        [1] = {  
+            Event = "DungeonAction",  
+            Action = "Start",  
+            Dungeon = Player.UserId  
+        },  
+        [2] = "\4"  
+    }  
+}))  
 
-    task.delay(2.2, function()
-        Creating = false
-    end)
+task.delay(2.2, function()  
+    Creating = false  
+end)
+
 end
 
 -- =====================================================
@@ -177,688 +166,152 @@ end
 local EnemiesFolder = workspace.__Main.__Enemies.Server
 
 local function GetClosestEnemy()
-    local char = Player.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root then return nil end
+local char = Player.Character
+local root = char and char:FindFirstChild("HumanoidRootPart")
+if not root then return nil end
 
-    local pos = root.Position
-    local best, dist = nil, math.huge
+local pos = root.Position  
+local best, dist = nil, math.huge  
 
-    for _, e in ipairs(EnemiesFolder:GetChildren()) do
-        local hp = e:GetAttribute("HP")
-        if hp and hp > 0 and e.Position then
-            local d = (pos - e.Position).Magnitude
-            if d < dist then
-                dist = d
-                best = e
-            end
-        end
-    end
+for _, e in ipairs(EnemiesFolder:GetChildren()) do  
+    local hp = e:GetAttribute("HP")  
+    if hp and hp > 0 and e.Position then  
+        local d = (pos - e.Position).Magnitude  
+        if d < dist then  
+            dist = d  
+            best = e  
+        end  
+    end  
+end  
 
-    return best
+return best
+
 end
 
 local function MoveToEnemy(enemy)
-    local root = Player.Character.HumanoidRootPart
-    if not root then return end
+local root = Player.Character.HumanoidRootPart
+if not root then return end
 
-    if Config.MoveMode == "Teleport" then
-        if currentTween then currentTween:Cancel() end
-        root.CFrame = enemy.CFrame
-    else
-        if currentTween then currentTween:Cancel() end
-        currentTween = TweenService:Create(
-            root,
-            TweenInfo.new(0.3),
-            { CFrame = enemy.CFrame }
-        )
-        currentTween:Play()
-    end
+if Config.MoveMode == "Teleport" then  
+    if currentTween then currentTween:Cancel() end  
+    root.CFrame = enemy.CFrame  
+else  
+    if currentTween then currentTween:Cancel() end  
+    currentTween = TweenService:Create(  
+        root,  
+        TweenInfo.new(0.3),  
+        { CFrame = enemy.CFrame }  
+    )  
+    currentTween:Play()  
+end
+
 end
 
 -- =====================================================
 -- AUTO DUNGEON LOOP
 -- =====================================================
 RunService.Heartbeat:Connect(function(dt)
-    if not Config.AutoFarm then
-        DungeonRunning = false
-        SpawnConfirmTime = 0
-        return
-    end
+if not Config.AutoFarm then
+DungeonRunning = false
+SpawnConfirmTime = 0
+return
+end
 
-    local enemy = GetClosestEnemy()
+local enemy = GetClosestEnemy()  
 
-    if enemy then
-        Status:SetDesc("Farming (" .. Config.MoveMode .. ")")
-        DungeonRunning = true
-        StartingDungeon = false
-        SpawnConfirmTime = 0
-        MoveToEnemy(enemy)
-        return
-    end
+if enemy then  
+    Status:SetDesc("Farming (" .. Config.MoveMode .. ")")  
+    DungeonRunning = true  
+    StartingDungeon = false  
+    SpawnConfirmTime = 0  
+    MoveToEnemy(enemy)  
+    return  
+end  
 
-    if DungeonRunning then
-        SpawnConfirmTime += dt
-        Status:SetDesc(string.format("Finishing Dungeon... %.1fs", SpawnConfirmTime))
+if DungeonRunning then  
+    SpawnConfirmTime += dt  
+    Status:SetDesc(string.format("Finishing Dungeon... %.1fs", SpawnConfirmTime))  
 
-        if SpawnConfirmTime >= 1.8 then
-            Status:SetDesc("Dungeon Solada → Recriando")
-            DungeonRunning = false
-            SpawnConfirmTime = 0
-            CreateDungeon()
-        end
-    else
-        if StartingDungeon then
-            Status:SetDesc("Starting Dungeon...")
-        else
-            Status:SetDesc("Waiting Dungeon Start")
-            CreateDungeon()
-        end
-    end
+    if SpawnConfirmTime >= 1.8 then  
+        Status:SetDesc("Dungeon Solada → Recriando")  
+        DungeonRunning = false  
+        SpawnConfirmTime = 0  
+        CreateDungeon()  
+    end  
+else  
+    if StartingDungeon then  
+        Status:SetDesc("Starting Dungeon...")  
+    else  
+        Status:SetDesc("Waiting Dungeon Start")  
+        CreateDungeon()  
+    end  
+end
+
 end)
 
 -- =====================================================
 -- AUTO RENASCIMENTO (OTIMIZADO)
 -- =====================================================
 task.spawn(function()
-    local lastExp, lastShadow, lastRebirth = 0, 0, 0
+local lastExp, lastShadow, lastRebirth = 0, 0, 0
 
-    while true do
-        task.wait(1)
+while true do  
+    task.wait(1)  
 
-        if not Config.AutoRebirth then
-            lastExp, lastShadow, lastRebirth = 0, 0, 0
-            continue
-        end
+    if not Config.AutoRebirth then  
+        lastExp, lastShadow, lastRebirth = 0, 0, 0  
+        continue  
+    end  
 
-        local now = os.clock()
+    local now = os.clock()  
 
-        if now - lastExp >= 30 then
-            lastExp = now
-            Remote:FireServer(unpack({
-                [1] = {
-                    [1] = {
-                        Stats = "PlayerExp",
-                        Event = "StatsUp",
-                        Points = 200
-                    },
-                    [2] = "\4"
-                }
-            }))
-        end
+    if now - lastExp >= 30 then  
+        lastExp = now  
+        Remote:FireServer(unpack({  
+            [1] = {  
+                [1] = {  
+                    Stats = "PlayerExp",  
+                    Event = "StatsUp",  
+                    Points = 200  
+                },  
+                [2] = "\4"  
+            }  
+        }))  
+    end  
 
-        if now - lastShadow >= 40 then
-            lastShadow = now
-            Remote:FireServer(unpack({
-                [1] = {
-                    [1] = {
-                        Stats = "ShadowRange",
-                        Event = "StatsUp",
-                        Points = 200
-                    },
-                    [2] = "\4"
-                }
-            }))
-        end
+    if now - lastShadow >= 40 then  
+        lastShadow = now  
+        Remote:FireServer(unpack({  
+            [1] = {  
+                [1] = {  
+                    Stats = "ShadowRange",  
+                    Event = "StatsUp",  
+                    Points = 200  
+                },  
+                [2] = "\4"  
+            }  
+        }))  
+    end  
 
-        if now - lastRebirth >= 600 then
-            lastRebirth = now
-            Remote:FireServer(unpack({
-                [1] = {
-                    [1] = { Event = "RebirthPlayer" },
-                    [2] = "\4"
-                }
-            }))
-        end
-    end
+    if now - lastRebirth >= 600 then  
+        lastRebirth = now  
+        Remote:FireServer(unpack({  
+            [1] = {  
+                [1] = { Event = "RebirthPlayer" },  
+                [2] = "\4"  
+            }  
+        }))  
+    end  
+end
+
 end)
-
-    return false
-end
-
--- ==========================
--- Auto Castle Sistema Modificado e Corrigido
--- ==========================
-
-local castleEnabled = false
-local castleInfEnabled = false
-local castleCreateOnlyEnabled = false
-local castleSessionActive = false
-
--- =======================
--- CONFIGS COM SALVAMENTO AUTOMÁTICO
--- =======================
-
--- Configuração do andar de entrada (padrão 125)
-if ConfigSystem.DefaultConfig.CastleEntryFloor == nil then
-    ConfigSystem.DefaultConfig.CastleEntryFloor = 480
-end
-if ConfigSystem.CurrentConfig.CastleEntryFloor == nil then
-    ConfigSystem.CurrentConfig.CastleEntryFloor = ConfigSystem.DefaultConfig.CastleEntryFloor
-end
-local entryFloor = ConfigSystem.CurrentConfig.CastleEntryFloor
-
--- Configuração do andar de reset (padrão 200)
-if ConfigSystem.DefaultConfig.CastleResetFloor == nil then
-    ConfigSystem.DefaultConfig.CastleResetFloor = 495
-end
-if ConfigSystem.CurrentConfig.CastleResetFloor == nil then
-    ConfigSystem.CurrentConfig.CastleResetFloor = ConfigSystem.DefaultConfig.CastleResetFloor
-end
-local resetFloor = ConfigSystem.CurrentConfig.CastleResetFloor
-
--- Salvamento dos toggles
-if ConfigSystem.DefaultConfig.CastleInfToggle == nil then
-    ConfigSystem.DefaultConfig.CastleInfToggle = false
-end
-if ConfigSystem.CurrentConfig.CastleInfToggle == nil then
-    ConfigSystem.CurrentConfig.CastleInfToggle = ConfigSystem.DefaultConfig.CastleInfToggle
-end
-
-if ConfigSystem.DefaultConfig.CastleToggle == nil then
-    ConfigSystem.DefaultConfig.CastleToggle = false
-end
-if ConfigSystem.CurrentConfig.CastleToggle == nil then
-    ConfigSystem.CurrentConfig.CastleToggle = ConfigSystem.DefaultConfig.CastleToggle
-end
-
-if ConfigSystem.DefaultConfig.CastleCreateOnlyToggle == nil then
-    ConfigSystem.DefaultConfig.CastleCreateOnlyToggle = false
-end
-if ConfigSystem.CurrentConfig.CastleCreateOnlyToggle == nil then
-    ConfigSystem.CurrentConfig.CastleCreateOnlyToggle = ConfigSystem.DefaultConfig.CastleCreateOnlyToggle
-end
-
--- Input para configurar andar de entrada
-Tabs.Castle:AddInput("CastleEntryFloor", {
-    Title = "Castle Entry Floor",
-    Default = tostring(entryFloor),
-    Placeholder = "Andar de entrada (ex: 125)",
-    Numeric = true,
-    Finished = true,
-    Callback = function(value)
-        local floor = tonumber(value)
-        if floor and floor > 0 then
-            entryFloor = floor
-            ConfigSystem.CurrentConfig.CastleEntryFloor = floor
-            ConfigSystem.SaveConfig()
-                    end
-    end
-})
-
--- Input para configurar andar de reset
-Tabs.Castle:AddInput("CastleResetFloor", {
-    Title = "Castle Reset Detection Floor",
-    Default = tostring(resetFloor),
-    Placeholder = "Andar para detectar e resetar (ex: 200)",
-    Numeric = true,
-    Finished = true,
-    Callback = function(value)
-        local floor = tonumber(value)
-        if floor and floor > 0 then
-            resetFloor = floor
-            ConfigSystem.CurrentConfig.CastleResetFloor = floor
-            ConfigSystem.SaveConfig()
-                    end
-    end
-})
-
--- ==========================
--- FUNÇÕES CASTLE BÁSICAS
--- ==========================
-
--- Detectar andar atual
-local function getCurrentCastleFloor()
-    local main = workspace:FindFirstChild("__Main")
-    if not main then return nil end
-    local world = main:FindFirstChild("__World")
-    if not world then return nil end
-
-    local current = nil
-    for i = 1, 300 do
-        if world:FindFirstChild("Room_" .. i) then
-            current = i
-        end
-    end
-
-    if current then
-            else
-            end
-    return current
-end
-
--- Comprar ticket com gems
-local function buyCastleTicket()
-        local args = {
-        [1] = {
-            [1] = {
-                ["Type"] = "Gems",
-                ["Event"] = "CastleAction",
-                ["Action"] = "BuyTicket"
-            },
-            [2] = "\4"
-        }
-    }
-    pcall(function() 
-        game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args)) 
-    end)
-end
-
--- Entrar no castelo
-local function joinCastle(floor)
-    floor = floor or entryFloor
-        local joinArgs = {
-        [1] = {
-            [1] = {
-                ["Check"] = true,
-                ["Floor"] = tostring(floor),
-                ["Event"] = "CastleAction",
-                ["Action"] = "Join"
-            },
-            [2] = "\4"
-        }
-    }
-    pcall(function() 
-        game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(joinArgs)) 
-    end)
-end
-
--- Função para criar o castelo
-local function createCastle()
-        local args = {
-        [1] = {
-            [1] = {
-                ["Event"] = "CastleAction",
-                ["Action"] = "Create"
-            },
-            [2] = "\4"
-        }
-    }
-    pcall(function() 
-        game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args)) 
-    end)
-    task.wait(3)
-end
-
--- ==========================
--- CASTLE INF - FARM E PORTAL (CORRIGIDO)
--- ==========================
-
--- Função para encontrar o FirePortal
-local function findFirePortal()
-    local main = workspace:FindFirstChild("__Main")
-    if not main then return nil, nil end
-    local world = main:FindFirstChild("__World")
-    if not world then return nil, nil end
-
-    for i = 1, 300 do
-        local room = world:FindFirstChild("Room_" .. i)
-        if room then
-            local portal = room:FindFirstChild("FirePortal")
-            if portal then
-                return portal, i
-            end
-        end
-    end
-    return nil, nil
-end
-
--- Teleportar para o FirePortal
-local function teleportToFirePortal()
-    local portal, currentFloor = findFirePortal()
-    if not portal then 
-                return false 
-    end
-
-    local player = game.Players.LocalPlayer
-    local char = player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return false end
-
-    local hrp = char.HumanoidRootPart
-    hrp.CFrame = portal.CFrame * CFrame.new(0, 2, -2)
-    hrp.Velocity = Vector3.new(0, 0, 0)
-
-        return true, currentFloor
-end
-
--- Ativar FirePortal
-local function activateFirePortal()
-    local portal, currentFloor = findFirePortal()
-    if not portal then return false end
-
-    local prompt = portal:FindFirstChildOfClass("ProximityPrompt")
-    if not prompt then
-        for _, obj in ipairs(portal:GetDescendants()) do
-            if obj:IsA("ProximityPrompt") then
-                prompt = obj
-                break
-            end
-        end
-    end
-
-    if not prompt and portal.Parent then
-        prompt = portal.Parent:FindFirstChildOfClass("ProximityPrompt")
-    end
-
-    if prompt then
-        for _ = 1, 3 do
-            pcall(function()
-                fireproximityprompt(prompt)
-            end)
-            task.wait(0.1)
-        end
-                return true
-    end
-
-    return false
-end
-
--- Farm mobs no castle (CORRIGIDO - ESPERA O MOB MORRER)
-local function farmCastleMobs()
-    local mobsKilled = false
-    local enemiesFolder = workspace:FindFirstChild("__Main")
-
-    if enemiesFolder then
-        enemiesFolder = enemiesFolder:FindFirstChild("__Enemies")
-        if enemiesFolder then
-            enemiesFolder = enemiesFolder:FindFirstChild("Server")
-        end
-    end
-
-    if enemiesFolder then
-        for _, mob in pairs(enemiesFolder:GetChildren()) do
-            if not castleInfEnabled then break end
-
-            local hp = mob:GetAttribute("HP")
-            if hp and hp > 0 and mob.Position then
-                local player = game.Players.LocalPlayer
-                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    -- Teleportar para o mob
-                    player.Character.HumanoidRootPart.CFrame = mob.CFrame * CFrame.new(0, 0, 3)
-
-                    -- Atacar o mob
-                    pcall(function()
-                        local remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-                        remote:FireServer({
-                            {
-                                ["PetPos"] = {},
-                                ["AttackType"] = "All", 
-                                ["Event"] = "Attack",
-                                ["Enemy"] = mob.Name
-                            },
-                            "\7"
-                        })
-                    end)
-
-                    -- AGUARDAR O MOB MORRER ANTES DE IR PARA O PRÓXIMO
-                                        while castleInfEnabled and mob.Parent do
-                        local currentHP = mob:GetAttribute("HP")
-                        if not currentHP or currentHP <= 0 then
-                                                        break
-                        end
-                        task.wait(0.2)
-                    end
-
-                    mobsKilled = true
-                end
-            end
-        end
-    end
-
-    return mobsKilled
-end
-
--- ==========================
--- CASTLE INF - LOOP PRINCIPAL
--- ==========================
-local function castleInfLoop()
-    task.spawn(function()
-                while castleInfEnabled do
-            -- Farm mobs primeiro
-            local foundMobs = farmCastleMobs()
-
-            -- Se não há mobs, tentar subir de andar
-            if not foundMobs then
-                local success = teleportToFirePortal()
-                if success then
-                    task.wait(1)
-                    activateFirePortal()
-                    task.wait(2)
-                end
-            end
-
-            task.wait(0.5)
-        end
-            end)
-end
-
--- ==========================
--- AUTO CASTLE - CRIAÇÃO, DETECÇÃO E RECRIAÇÃO
--- ==========================
-
-local function autoCastleLoop()
-    task.spawn(function()
-                while castleEnabled do
-            local currentFloor = getCurrentCastleFloor()
-
-            if not currentFloor then
-                -- Fora do castelo → criar, comprar ticket e entrar
-                                createCastle()
-                task.wait(1)
-                buyCastleTicket()
-                task.wait(1)
-                joinCastle(entryFloor)
-                task.wait(5)
-            else
-                -- Dentro do castelo - verifica se deve recriar
-                if currentFloor >= resetFloor then
-
-                    createCastle()
-                    task.wait(1)
-                    buyCastleTicket()
-                    task.wait(1)
-                    joinCastle(entryFloor)
-
-                    task.wait(5)
-                else
-                    -- Farm mobs enquanto espera
-                    farmCastleMobs()
-                    task.wait(1)
-                end
-            end
-
-            task.wait(0.5)
-        end
-            end)
-end
-
--- ==========================
--- AUTO CASTLE - APENAS CRIAR (LOOP CONTÍNUO SEM RESET)
--- ==========================
-
-local function castleCreateOnlyLoop()
-    task.spawn(function()
-                while castleCreateOnlyEnabled do
-            local currentFloor = getCurrentCastleFloor()
-
-            if not currentFloor then
-                -- Fora do castelo → criar, comprar ticket e entrar
-                                createCastle()
-                task.wait(1)
-                buyCastleTicket()
-                task.wait(1)
-                joinCastle(entryFloor)
-                task.wait(5)
-
-                else
-                -- Dentro do castelo - apenas aguarda (SEM RESET)
-                                task.wait(2)
-            end
-
-            task.wait(0.5)
-        end
-            end)
-end
-
--- ==========================
--- TOGGLES AUTOMÁTICOS COM SALVAMENTO
--- ==========================
-
--- Toggle Castle INF (com auto-boot)
-Tabs.Castle:AddToggle("CastleINF", {
-    Title = "Castle INF (Farm + Portal)",
-    Default = ConfigSystem.CurrentConfig.CastleInfToggle or false,
-    Callback = function(state)
-        castleInfEnabled = state
-        ConfigSystem.CurrentConfig.CastleInfToggle = state
-        ConfigSystem.SaveConfig()
-
-        if state then
-            castleInfLoop()
-        else
-            end
-    end
-})
-
--- Toggle Auto Castle (Criação, Detecção e Recriação) (com auto-boot)
-Tabs.Castle:AddToggle("AutoCastle", {
-    Title = "Auto Castle (Create + Recreate)",
-    Default = ConfigSystem.CurrentConfig.CastleToggle or false,
-    Callback = function(state)
-        castleEnabled = state
-        ConfigSystem.CurrentConfig.CastleToggle = state
-        ConfigSystem.SaveConfig()
-
-        if state then
-            createCastle()
-            task.wait(1)
-            buyCastleTicket()
-            task.wait(1)
-            joinCastle(entryFloor)
-            task.wait(2)
-
-            castleSessionActive = true
-            autoCastleLoop()
-        else
-            if castleSessionActive then
-                castleSessionActive = false
-            end
-
-            end
-    end
-})
-
--- Toggle Auto Castelo (Apenas Criar - Loop Contínuo SEM Reset)
-Tabs.Castle:AddToggle("AutoCasteloOnly", {
-    Title = "Auto Castelo (Criar Apenas)",
-    Description = "Cria e entra automaticamente quando fora do castelo (SEM reset)",
-    Default = ConfigSystem.CurrentConfig.CastleCreateOnlyToggle or false,
-    Callback = function(state)
-        castleCreateOnlyEnabled = state
-        ConfigSystem.CurrentConfig.CastleCreateOnlyToggle = state
-        ConfigSystem.SaveConfig()
-
-        if state then
-            castleCreateOnlyLoop()
-        else
-            end
-    end
-})
-
-
--- 🎯 NOVA OPÇÃO: SPEED DO CASTELO INFERNAL (com toggle de ativação)
-local selectedCastleSpeed = ConfigSystem.CurrentConfig.CastleSpeed or "1"
-local castleSpeedEnabled = ConfigSystem.CurrentConfig.CastleSpeedEnabled or false
-
-Tabs.Castle:AddDropdown("CastleSpeedDropdown", {
-    Title = "Speed do Castelo Infernal",
-    Values = {"1", "2", "4"},
-    Multi = false,
-    Default = selectedCastleSpeed,
-    Callback = function(speed)
-        selectedCastleSpeed = speed
-        ConfigSystem.CurrentConfig.CastleSpeed = speed
-        ConfigSystem.SaveConfig()
-
-        if castleSpeedEnabled then
-            -- Aplica o código correto de velocidade do castelo
-            local args = {
-                [1] = {
-                    [1] = {
-                        ["Speed"] = tonumber(speed),
-                        ["Event"] = "CastleAction",
-                        ["Action"] = "SpeedUp"
-                    },
-                    [2] = "\4"
-                }
-            }
-            game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
-        end
-    end
-})
-
-Tabs.Castle:AddToggle("EnableCastleSpeed", {
-    Title = "Ativar Speed do Castelo",
-    Default = castleSpeedEnabled,
-    Callback = function(state)
-        castleSpeedEnabled = state
-        ConfigSystem.CurrentConfig.CastleSpeedEnabled = state
-        ConfigSystem.SaveConfig()
-
-        if state then
-            -- Aplica imediatamente a velocidade salva
-            local speed = tonumber(ConfigSystem.CurrentConfig.CastleSpeed or selectedCastleSpeed or "1")
-            local args = {
-                [1] = {
-                    [1] = {
-                        ["Speed"] = speed,
-                        ["Event"] = "CastleAction",
-                        ["Action"] = "SpeedUp"
-                    },
-                    [2] = "\4"
-                }
-            }
-            game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
-        end
-    end
-})
-
-
--- ==========================
--- AUTO-BOOT: REATIVAR TOGGLES SALVOS
--- ==========================
-
--- Se Castle INF estava ativo, reativar
-if ConfigSystem.CurrentConfig.CastleInfToggle then
-    castleInfEnabled = true
-    castleInfLoop()
-    end
-
--- Se Auto Castle estava ativo, reativar
-if ConfigSystem.CurrentConfig.CastleToggle then
-    castleEnabled = true
-    createCastle()
-    task.wait(1)
-    buyCastleTicket()
-    task.wait(1)
-    joinCastle(entryFloor)
-    task.wait(2)
-    castleSessionActive = true
-    autoCastleLoop()
-    end
-
--- Se Auto Castelo (criar apenas) estava ativo, reativar
-if ConfigSystem.CurrentConfig.CastleCreateOnlyToggle then
-    castleCreateOnlyEnabled = true
-    castleCreateOnlyLoop()
-    end
 
 -- =====================================================
 -- NOTIFY
 -- =====================================================
 Fluent:Notify({
-    Title = "Allan Hub",
-    Content = "Auto Dungeon + Auto Renascimento carregado",
-    Duration = 6
+Title = "Allan Hub",
+Content = "Auto Dungeon + Auto Renascimento carregado",
+Duration = 6
 })
-
+Agora está 100%?
