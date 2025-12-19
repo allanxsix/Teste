@@ -700,3 +700,156 @@ local function castleCreateOnlyLoop()
             end)
 end
 
+-- ==========================
+-- TOGGLES AUTOMÁTICOS COM SALVAMENTO
+-- ==========================
+
+-- Toggle Castle INF (com auto-boot)
+Tabs.dungeon:AddToggle("CastleINF", {
+    Title = "Castle INF (Farm + Portal)",
+    Default = ConfigSystem.CurrentConfig.CastleInfToggle or false,
+    Callback = function(state)
+        castleInfEnabled = state
+        ConfigSystem.CurrentConfig.CastleInfToggle = state
+        ConfigSystem.SaveConfig()
+
+        if state then
+            castleInfLoop()
+        else
+            end
+    end
+})
+
+-- Toggle Auto Castle (Criação, Detecção e Recriação) (com auto-boot)
+Tabs.dungeon:AddToggle("AutoCastle", {
+    Title = "Auto Castle (Create + Recreate)",
+    Default = ConfigSystem.CurrentConfig.CastleToggle or false,
+    Callback = function(state)
+        castleEnabled = state
+        ConfigSystem.CurrentConfig.CastleToggle = state
+        ConfigSystem.SaveConfig()
+
+        if state then
+            createCastle()
+            task.wait(1)
+            buyCastleTicket()
+            task.wait(1)
+            joinCastle(entryFloor)
+            task.wait(2)
+
+            castleSessionActive = true
+            autoCastleLoop()
+        else
+            if castleSessionActive then
+                castleSessionActive = false
+            end
+
+            end
+    end
+})
+
+-- Toggle Auto Castelo (Apenas Criar - Loop Contínuo SEM Reset)
+Tabs.dungeon:AddToggle("AutoCasteloOnly", {
+    Title = "Auto Castelo (Criar Apenas)",
+    Description = "Cria e entra automaticamente quando fora do castelo (SEM reset)",
+    Default = ConfigSystem.CurrentConfig.CastleCreateOnlyToggle or false,
+    Callback = function(state)
+        castleCreateOnlyEnabled = state
+        ConfigSystem.CurrentConfig.CastleCreateOnlyToggle = state
+        ConfigSystem.SaveConfig()
+
+        if state then
+            castleCreateOnlyLoop()
+        else
+            end
+    end
+})
+
+
+-- 🎯 NOVA OPÇÃO: SPEED DO CASTELO INFERNAL (com toggle de ativação)
+local selectedCastleSpeed = ConfigSystem.CurrentConfig.CastleSpeed or "1"
+local castleSpeedEnabled = ConfigSystem.CurrentConfig.CastleSpeedEnabled or false
+
+Tabs.dungeon:AddDropdown("CastleSpeedDropdown", {
+    Title = "Speed do Castelo Infernal",
+    Values = {"1", "2", "4"},
+    Multi = false,
+    Default = selectedCastleSpeed,
+    Callback = function(speed)
+        selectedCastleSpeed = speed
+        ConfigSystem.CurrentConfig.CastleSpeed = speed
+        ConfigSystem.SaveConfig()
+
+        if castleSpeedEnabled then
+            -- Aplica o código correto de velocidade do castelo
+            local args = {
+                [1] = {
+                    [1] = {
+                        ["Speed"] = tonumber(speed),
+                        ["Event"] = "CastleAction",
+                        ["Action"] = "SpeedUp"
+                    },
+                    [2] = "\4"
+                }
+            }
+            game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
+        end
+    end
+})
+
+Tabs.dungeon:AddToggle("EnableCastleSpeed", {
+    Title = "Ativar Speed do Castelo",
+    Default = castleSpeedEnabled,
+    Callback = function(state)
+        castleSpeedEnabled = state
+        ConfigSystem.CurrentConfig.CastleSpeedEnabled = state
+        ConfigSystem.SaveConfig()
+
+        if state then
+            -- Aplica imediatamente a velocidade salva
+            local speed = tonumber(ConfigSystem.CurrentConfig.CastleSpeed or selectedCastleSpeed or "1")
+            local args = {
+                [1] = {
+                    [1] = {
+                        ["Speed"] = speed,
+                        ["Event"] = "CastleAction",
+                        ["Action"] = "SpeedUp"
+                    },
+                    [2] = "\4"
+                }
+            }
+            game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
+        end
+    end
+})
+
+
+-- ==========================
+-- AUTO-BOOT: REATIVAR TOGGLES SALVOS
+-- ==========================
+
+-- Se Castle INF estava ativo, reativar
+if ConfigSystem.CurrentConfig.CastleInfToggle then
+    castleInfEnabled = true
+    castleInfLoop()
+    end
+
+-- Se Auto Castle estava ativo, reativar
+if ConfigSystem.CurrentConfig.CastleToggle then
+    castleEnabled = true
+    createCastle()
+    task.wait(1)
+    buyCastleTicket()
+    task.wait(1)
+    joinCastle(entryFloor)
+    task.wait(2)
+    castleSessionActive = true
+    autoCastleLoop()
+    end
+
+-- Se Auto Castelo (criar apenas) estava ativo, reativar
+if ConfigSystem.CurrentConfig.CastleCreateOnlyToggle then
+    castleCreateOnlyEnabled = true
+    castleCreateOnlyLoop()
+    end
+
