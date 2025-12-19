@@ -679,7 +679,6 @@ Tabs.Castle:AddDropdown("CastleSpeedDropdown", {
     end
 })
 
-
 Tabs.Castle:AddToggle("EnableCastleSpeed", {
     Title = "Ativar Speed do Castelo",
     Default = false,
