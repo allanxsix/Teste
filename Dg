@@ -10,9 +10,106 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 
 local Player = Players.LocalPlayer
 local Remote = ReplicatedStorage.BridgeNet2.dataRemoteEvent
+
+-- =====================================================
+-- CRIAR BOTÃO MINIMIZADO CUSTOMIZADO
+-- =====================================================
+local function CreateMinimizeButton()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "AllanHubMinimize"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    local MinimizeButton = Instance.new("ImageButton")
+    MinimizeButton.Name = "MinimizeButton"
+    MinimizeButton.Parent = ScreenGui
+    MinimizeButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MinimizeButton.BackgroundTransparency = 0.3
+    MinimizeButton.BorderSizePixel = 0
+    MinimizeButton.Position = UDim2.new(0.5, -35, 0, 10)
+    MinimizeButton.Size = UDim2.new(0, 70, 0, 70)
+    MinimizeButton.Image = "rbxassetid://YOUR_IMAGE_ID_HERE" -- COLOQUE O ID DA SUA LOGO AQUI
+    MinimizeButton.ScaleType = Enum.ScaleType.Fit
+    MinimizeButton.Visible = false
+    
+    -- Borda arredondada
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 12)
+    Corner.Parent = MinimizeButton
+    
+    -- Sombra
+    local Shadow = Instance.new("ImageLabel")
+    Shadow.Name = "Shadow"
+    Shadow.Parent = MinimizeButton
+    Shadow.BackgroundTransparency = 1
+    Shadow.Position = UDim2.new(0, -5, 0, -5)
+    Shadow.Size = UDim2.new(1, 10, 1, 10)
+    Shadow.ZIndex = 0
+    Shadow.Image = "rbxassetid://5554236805"
+    Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    Shadow.ImageTransparency = 0.5
+    Shadow.ScaleType = Enum.ScaleType.Slice
+    Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
+    
+    -- Texto opcional (caso queira adicionar)
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Name = "Label"
+    TextLabel.Parent = MinimizeButton
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Position = UDim2.new(0, 0, 1, 5)
+    TextLabel.Size = UDim2.new(1, 0, 0, 20)
+    TextLabel.Font = Enum.Font.GothamBold
+    TextLabel.Text = "Allan Hub"
+    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.TextSize = 10
+    TextLabel.TextTransparency = 0.3
+    
+    -- Arrastar o botão
+    local dragging = false
+    local dragInput, mousePos, framePos
+    
+    MinimizeButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            framePos = MinimizeButton.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    MinimizeButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - mousePos
+            MinimizeButton.Position = UDim2.new(
+                framePos.X.Scale,
+                framePos.X.Offset + delta.X,
+                framePos.Y.Scale,
+                framePos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    ScreenGui.Parent = CoreGui
+    
+    return ScreenGui, MinimizeButton
+end
+
+local MinimizeGui, MinimizeButton = CreateMinimizeButton()
 
 -- =====================================================
 -- FLUENT + SAVE
@@ -27,7 +124,7 @@ local SaveManager = loadstring(game:HttpGet(
 
 local Window = Fluent:CreateWindow({
 Title = "Allan Hub",
-SubTitle = "Auto Dungeon + Auto Rebirth",
+SubTitle = "Auto Dungeon + Auto Rebirth + Castle",
 TabWidth = 160,
 Size = UDim2.fromOffset(540, 420),
 Acrylic = true,
@@ -39,10 +136,75 @@ SaveManager:SetLibrary(Fluent)
 SaveManager:SetFolder("AllanHub")
 
 -- =====================================================
+-- CONTROLE DE MINIMIZAÇÃO CUSTOMIZADO
+-- =====================================================
+local WindowVisible = true
+
+local function ToggleWindow()
+    WindowVisible = not WindowVisible
+    
+    if WindowVisible then
+        -- Mostrar janela
+        Window:SetOpen(true)
+        MinimizeButton.Visible = false
+        
+        -- Animação do botão
+        TweenService:Create(MinimizeButton, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
+            ImageTransparency = 1
+        }):Play()
+    else
+        -- Esconder janela
+        Window:SetOpen(false)
+        MinimizeButton.Visible = true
+        MinimizeButton.Size = UDim2.new(0, 0, 0, 0)
+        MinimizeButton.BackgroundTransparency = 1
+        MinimizeButton.ImageTransparency = 1
+        
+        -- Animação do botão
+        TweenService:Create(MinimizeButton, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 70, 0, 70),
+            BackgroundTransparency = 0.3,
+            ImageTransparency = 0
+        }):Play()
+    end
+end
+
+-- Clique no botão de minimizar
+MinimizeButton.MouseButton1Click:Connect(function()
+    ToggleWindow()
+end)
+
+-- Detectar quando a janela é fechada pela tecla End
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.End then
+        task.wait(0.1) -- Pequeno delay para permitir que o Fluent processe primeiro
+        if not WindowVisible then
+            ToggleWindow()
+        else
+            WindowVisible = false
+            MinimizeButton.Visible = true
+            MinimizeButton.Size = UDim2.new(0, 0, 0, 0)
+            MinimizeButton.BackgroundTransparency = 1
+            MinimizeButton.ImageTransparency = 1
+            
+            TweenService:Create(MinimizeButton, TweenInfo.new(0.3), {
+                Size = UDim2.new(0, 70, 0, 70),
+                BackgroundTransparency = 0.3,
+                ImageTransparency = 0
+            }):Play()
+        end
+    end
+end)
+
+-- =====================================================
 -- TABS
 -- =====================================================
 local Tabs = {
 Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "swords" }),
+Castle = Window:AddTab({ Title = "Castelo Infernal", Icon = "flame" }),
 Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -53,11 +215,29 @@ local Config = {
 AutoFarm = false,
 AutoBuyTicket = false,
 MoveMode = "Tween",
-AutoRebirth = false
+AutoRebirth = false,
+-- Castle configs
+CastleInf = false,
+AutoCastle = false,
+CastleCreateOnly = false,
+CastleSpeed = "1",
+CastleSpeedEnabled = false,
+EntryFloor = 1,
+ResetFloor = 100
 }
 
 -- =====================================================
--- UI (FLAGS = SALVO)
+-- CASTLE VARIABLES
+-- =====================================================
+local castleInfEnabled = false
+local castleEnabled = false
+local castleCreateOnlyEnabled = false
+local castleSessionActive = false
+local entryFloor = 1
+local resetFloor = 100
+
+-- =====================================================
+-- UI DUNGEON (FLAGS = SALVO)
 -- =====================================================
 Tabs.Dungeon:AddToggle("AutoFarm", {
 Title = "Auto Farm Dungeon",
@@ -80,6 +260,7 @@ Default = "Tween",
 Flag = "MoveMode",
 Callback = function(v) Config.MoveMode = v end
 })
+
 Tabs.Dungeon:AddToggle("AutoRebirth", {
 Title = "Auto Renascimento",
 Description = "Rebirth + PlayerExp + ShadowRange automático",
@@ -95,11 +276,443 @@ Title = "Status",
 Content = "Idle"
 })
 
+-- =====================================================
+-- FUNÇÕES CASTLE BÁSICAS
+-- =====================================================
+
+-- Detectar andar atual
+local function getCurrentCastleFloor()
+    local main = workspace:FindFirstChild("__Main")
+    if not main then return nil end
+    local world = main:FindFirstChild("__World")
+    if not world then return nil end
+
+    local current = nil
+    for i = 1, 300 do
+        if world:FindFirstChild("Room_" .. i) then
+            current = i
+        end
+    end
+
+    return current
+end
+
+-- Comprar ticket com gems
+local function buyCastleTicket()
+    local args = {
+        [1] = {
+            [1] = {
+                ["Type"] = "Gems",
+                ["Event"] = "CastleAction",
+                ["Action"] = "BuyTicket"
+            },
+            [2] = "\4"
+        }
+    }
+    pcall(function() 
+        Remote:FireServer(unpack(args)) 
+    end)
+end
+
+-- Entrar no castelo
+local function joinCastle(floor)
+    floor = floor or entryFloor
+    local joinArgs = {
+        [1] = {
+            [1] = {
+                ["Check"] = true,
+                ["Floor"] = tostring(floor),
+                ["Event"] = "CastleAction",
+                ["Action"] = "Join"
+            },
+            [2] = "\4"
+        }
+    }
+    pcall(function() 
+        Remote:FireServer(unpack(joinArgs)) 
+    end)
+end
+
+-- Função para criar o castelo
+local function createCastle()
+    local args = {
+        [1] = {
+            [1] = {
+                ["Event"] = "CastleAction",
+                ["Action"] = "Create"
+            },
+            [2] = "\4"
+        }
+    }
+    pcall(function() 
+        Remote:FireServer(unpack(args)) 
+    end)
+    task.wait(3)
+end
+
+-- Função para encontrar o FirePortal
+local function findFirePortal()
+    local main = workspace:FindFirstChild("__Main")
+    if not main then return nil, nil end
+    local world = main:FindFirstChild("__World")
+    if not world then return nil, nil end
+
+    for i = 1, 300 do
+        local room = world:FindFirstChild("Room_" .. i)
+        if room then
+            local portal = room:FindFirstChild("FirePortal")
+            if portal then
+                return portal, i
+            end
+        end
+    end
+    return nil, nil
+end
+
+-- Teleportar para o FirePortal
+local function teleportToFirePortal()
+    local portal, currentFloor = findFirePortal()
+    if not portal then 
+        return false 
+    end
+
+    local char = Player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return false end
+
+    local hrp = char.HumanoidRootPart
+    hrp.CFrame = portal.CFrame * CFrame.new(0, 2, -2)
+    hrp.Velocity = Vector3.new(0, 0, 0)
+
+    return true, currentFloor
+end
+
+-- Ativar FirePortal
+local function activateFirePortal()
+    local portal, currentFloor = findFirePortal()
+    if not portal then return false end
+
+    local prompt = portal:FindFirstChildOfClass("ProximityPrompt")
+    if not prompt then
+        for _, obj in ipairs(portal:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") then
+                prompt = obj
+                break
+            end
+        end
+    end
+
+    if not prompt and portal.Parent then
+        prompt = portal.Parent:FindFirstChildOfClass("ProximityPrompt")
+    end
+
+    if prompt then
+        for _ = 1, 3 do
+            pcall(function()
+                fireproximityprompt(prompt)
+            end)
+            task.wait(0.1)
+        end
+        return true
+    end
+
+    return false
+end
+
+-- Farm mobs no castle
+local function farmCastleMobs()
+    local mobsKilled = false
+    local enemiesFolder = workspace:FindFirstChild("__Main")
+
+    if enemiesFolder then
+        enemiesFolder = enemiesFolder:FindFirstChild("__Enemies")
+        if enemiesFolder then
+            enemiesFolder = enemiesFolder:FindFirstChild("Server")
+        end
+    end
+
+    if enemiesFolder then
+        for _, mob in pairs(enemiesFolder:GetChildren()) do
+            if not castleInfEnabled then break end
+
+            local hp = mob:GetAttribute("HP")
+            if hp and hp > 0 and mob.Position then
+                if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                    -- Teleportar para o mob
+                    Player.Character.HumanoidRootPart.CFrame = mob.CFrame * CFrame.new(0, 0, 3)
+
+                    -- Atacar o mob
+                    pcall(function()
+                        Remote:FireServer({
+                            {
+                                ["PetPos"] = {},
+                                ["AttackType"] = "All", 
+                                ["Event"] = "Attack",
+                                ["Enemy"] = mob.Name
+                            },
+                            "\7"
+                        })
+                    end)
+
+                    -- AGUARDAR O MOB MORRER ANTES DE IR PARA O PRÓXIMO
+                    while castleInfEnabled and mob.Parent do
+                        local currentHP = mob:GetAttribute("HP")
+                        if not currentHP or currentHP <= 0 then
+                            break
+                        end
+                        task.wait(0.2)
+                    end
+
+                    mobsKilled = true
+                end
+            end
+        end
+    end
+
+    return mobsKilled
+end
+
+-- Castle INF Loop
+local function castleInfLoop()
+    task.spawn(function()
+        while castleInfEnabled do
+            -- Farm mobs primeiro
+            local foundMobs = farmCastleMobs()
+
+            -- Se não há mobs, tentar subir de andar
+            if not foundMobs then
+                local success = teleportToFirePortal()
+                if success then
+                    task.wait(1)
+                    activateFirePortal()
+                    task.wait(2)
+                end
+            end
+
+            task.wait(0.5)
+        end
+    end)
+end
+
+-- Auto Castle Loop
+local function autoCastleLoop()
+    task.spawn(function()
+        while castleEnabled do
+            local currentFloor = getCurrentCastleFloor()
+
+            if not currentFloor then
+                -- Fora do castelo → criar, comprar ticket e entrar
+                createCastle()
+                task.wait(1)
+                buyCastleTicket()
+                task.wait(1)
+                joinCastle(entryFloor)
+                task.wait(5)
+            else
+                -- Dentro do castelo - verifica se deve recriar
+                if currentFloor >= resetFloor then
+                    createCastle()
+                    task.wait(1)
+                    buyCastleTicket()
+                    task.wait(1)
+                    joinCastle(entryFloor)
+                    task.wait(5)
+                else
+                    -- Farm mobs enquanto espera
+                    farmCastleMobs()
+                    task.wait(1)
+                end
+            end
+
+            task.wait(0.5)
+        end
+    end)
+end
+
+-- Castle Create Only Loop
+local function castleCreateOnlyLoop()
+    task.spawn(function()
+        while castleCreateOnlyEnabled do
+            local currentFloor = getCurrentCastleFloor()
+
+            if not currentFloor then
+                -- Fora do castelo → criar, comprar ticket e entrar
+                createCastle()
+                task.wait(1)
+                buyCastleTicket()
+                task.wait(1)
+                joinCastle(entryFloor)
+                task.wait(5)
+            else
+                -- Dentro do castelo - apenas aguarda (SEM RESET)
+                task.wait(2)
+            end
+
+            task.wait(0.5)
+        end
+    end)
+end
+
+        Config.CastleCreateOnly = state
+
+        if state then
+            castleCreateOnlyLoop()
+        end
+    end
+-- =====================================================
+-- UI CASTLE (FLAGS = SALVO)
+-- =====================================================
+
+Tabs.Castle:AddInput("EntryFloor", {
+    Title = "Andar de Entrada",
+    Description = "Andar para entrar no castelo",
+    Default = "1",
+    Placeholder = "Digite o andar (ex: 1)",
+    Numeric = true,
+    Finished = true,
+    Flag = "CastleEntryFloor",
+    Callback = function(value)
+        local floor = tonumber(value)
+        if floor and floor > 0 then
+            entryFloor = floor
+            Config.EntryFloor = floor
+        end
+    end
+})
+
+Tabs.Castle:AddInput("ResetFloor", {
+    Title = "Andar de Reset",
+    Description = "Andar para recriar o castelo",
+    Default = "100",
+    Placeholder = "Digite o andar (ex: 100)",
+    Numeric = true,
+    Finished = true,
+    Flag = "CastleResetFloor",
+    Callback = function(value)
+        local floor = tonumber(value)
+        if floor and floor > 0 then
+            resetFloor = floor
+            Config.ResetFloor = floor
+        end
+    end
+})
+
+Tabs.Castle:AddToggle("CastleINF", {
+    Title = "Castle INF (Farm + Portal)",
+    Default = false,
+    Flag = "CastleInfToggle",
+    Callback = function(state)
+        castleInfEnabled = state
+        Config.CastleInf = state
+
+        if state then
+            castleInfLoop()
+        end
+    end
+})
+
+Tabs.Castle:AddToggle("AutoCastle", {
+    Title = "Auto Castle (Create + Recreate)",
+    Default = false,
+    Flag = "AutoCastleToggle",
+    Callback = function(state)
+        castleEnabled = state
+        Config.AutoCastle = state
+
+        if state then
+            createCastle()
+            task.wait(1)
+            buyCastleTicket()
+            task.wait(1)
+            joinCastle(entryFloor)
+            task.wait(2)
+
+            castleSessionActive = true
+            autoCastleLoop()
+        else
+            if castleSessionActive then
+                castleSessionActive = false
+            end
+        end
+    end
+})
+
+Tabs.Castle:AddToggle("AutoCasteloOnly", {
+    Title = "Auto Castelo (Criar Apenas)",
+    Description = "Cria e entra automaticamente quando fora do castelo (SEM reset)",
+    Default = false,
+    Flag = "CastleCreateOnlyToggle",
+    Callback = function(state)
+        castleCreateOnlyEnabled = state
+        Config.CastleCreateOnly = state
+
+        if state then
+            castleCreateOnlyLoop()
+        end
+    end
+})
+
+local selectedCastleSpeed = "1"
+local castleSpeedEnabled = false
+
+Tabs.Castle:AddDropdown("CastleSpeedDropdown", {
+    Title = "Speed do Castelo Infernal",
+    Values = {"1", "2", "4"},
+    Multi = false,
+    Default = "1",
+    Flag = "CastleSpeedValue",
+    Callback = function(speed)
+        selectedCastleSpeed = speed
+        Config.CastleSpeed = speed
+
+        if castleSpeedEnabled then
+            local args = {
+                [1] = {
+                    [1] = {
+                        ["Speed"] = tonumber(speed),
+                        ["Event"] = "CastleAction",
+                        ["Action"] = "SpeedUp"
+                    },
+                    [2] = "\4"
+                }
+            }
+            Remote:FireServer(unpack(args))
+        end
+    end
+})
+
+Tabs.Castle:AddToggle("EnableCastleSpeed", {
+    Title = "Ativar Speed do Castelo",
+    Default = false,
+    Flag = "CastleSpeedEnabled",
+    Callback = function(state)
+        castleSpeedEnabled = state
+        Config.CastleSpeedEnabled = state
+
+        if state then
+            local speed = tonumber(selectedCastleSpeed or "1")
+            local args = {
+                [1] = {
+                    [1] = {
+                        ["Speed"] = speed,
+                        ["Event"] = "CastleAction",
+                        ["Action"] = "SpeedUp"
+                    },
+                    [2] = "\4"
+                }
+            }
+            Remote:FireServer(unpack(args))
+        end
+    end
+})
+
+-- =====================================================
+-- SETTINGS TAB
+-- =====================================================
 SaveManager:BuildConfigSection(Tabs.Settings)
 SaveManager:LoadAutoloadConfig()
 
 -- =====================================================
--- STATES
+-- STATES DUNGEON
 -- =====================================================
 local Creating = false
 local StartingDungeon = false
@@ -311,6 +924,6 @@ end)
 -- =====================================================
 Fluent:Notify({
 Title = "Allan Hub",
-Content = "Auto Dungeon + Auto Renascimento carregado",
+Content = "Auto Dungeon + Auto Renascimento + Castle carregado",
 Duration = 6
 })
