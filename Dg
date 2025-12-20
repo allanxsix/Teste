@@ -969,7 +969,7 @@ end
 
 -- Dropdown e botão dentro da aba Islands
 local IslandDropdown = Tabs.Islands:AddDropdown("IslandDropdown", {
-    Title = "Ilhas Detectadas",
+    Title = "Ilhas,
     Values = ScanIslands(),
     Multi = false,
     Callback = function(value)
