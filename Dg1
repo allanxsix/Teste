@@ -850,7 +850,7 @@ task.wait(1)
         Remote:FireServer(unpack({
             [1] = {
                 [1] = { Event = "RebirthPlayer" },
-                [2] = "\4"
+                [2] = "\5"
             }
         }))
 
