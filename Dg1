@@ -316,7 +316,7 @@ local args = {
 ["Event"] = "CastleAction",
 ["Action"] = "BuyTicket"
 },
-[2] = "\3"
+[2] = "\4"
 }
 }
 pcall(function()
@@ -334,7 +334,7 @@ local joinArgs = {
 ["Event"] = "CastleAction",
 ["Action"] = "Join"
 },
-[2] = "\3"
+[2] = "\4"
 }
 }
 pcall(function()
@@ -349,7 +349,7 @@ local args = {
 ["Event"] = "CastleAction",
 ["Action"] = "Create"
 },
-[2] = "\3"
+[2] = "\4"
 }
 }
 pcall(function()
@@ -649,7 +649,7 @@ Config.CastleSpeed = speed
                     ["Event"] = "CastleAction",
                     ["Action"] = "SpeedUp"
                 },
-                [2] = "\3"
+                [2] = "\4"
             }
         }
         Remote:FireServer(unpack(args))
@@ -672,7 +672,7 @@ Config.CastleSpeedEnabled = state
                     ["Event"] = "CastleAction",
                     ["Action"] = "SpeedUp"
                 },
-                [2] = "\3"
+                [2] = "\4"
             }
         }
         Remote:FireServer(unpack(args))
@@ -700,7 +700,7 @@ local function BuyTicket()
 Remote:FireServer(unpack({
 [1] = {
 [1] = { Event = "DungeonAction", Action = "BuyTicket" },
-[2] = "\3"
+[2] = "\4"
 }
 }))
 end
@@ -721,7 +721,7 @@ end
 Remote:FireServer(unpack({
     [1] = {
         [1] = { Event = "DungeonAction", Action = "Create" },
-        [2] = "\3"
+        [2] = "\4"
     }
 }))
 
@@ -734,7 +734,7 @@ Remote:FireServer(unpack({
             Action = "Start",
             Dungeon = Player.UserId
         },
-        [2] = "\3"
+        [2] = "\4"
     }
 }))
 
@@ -850,7 +850,7 @@ task.wait(1)
         Remote:FireServer(unpack({
             [1] = {
                 [1] = { Event = "RebirthPlayer" },
-                [2] = "\3"
+                [2] = "\4"
             }
         }))
 
