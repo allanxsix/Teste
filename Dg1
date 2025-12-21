@@ -700,7 +700,7 @@ local function BuyTicket()
 Remote:FireServer(unpack({
 [1] = {
 [1] = { Event = "DungeonAction", Action = "BuyTicket" },
-[2] = "\4"
+[2] = "\3"
 }
 }))
 end
