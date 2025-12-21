@@ -23,7 +23,7 @@ local text = ExpText.Text
 if not text then return nil, false end
 local level = tonumber(string.match(text, "Level:%s*(%d+)"))
 
-if string.find(text, "MAX") then
+if string.find(text, "MAX") or string.find(string.lower(text), "MÁXIMO") then
     return level, true
 end
 
