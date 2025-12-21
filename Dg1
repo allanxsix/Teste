@@ -10,9 +10,106 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 
 local Player = Players.LocalPlayer
 local Remote = ReplicatedStorage.BridgeNet2.dataRemoteEvent
+
+-- =====================================================
+-- CRIAR BOTÃO MINIMIZADO CUSTOMIZADO
+-- =====================================================
+local function CreateMinimizeButton()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "AllanHubMinimize"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    local MinimizeButton = Instance.new("ImageButton")
+    MinimizeButton.Name = "MinimizeButton"
+    MinimizeButton.Parent = ScreenGui
+    MinimizeButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MinimizeButton.BackgroundTransparency = 0.3
+    MinimizeButton.BorderSizePixel = 0
+    MinimizeButton.Position = UDim2.new(0.5, -35, 0, 10)
+    MinimizeButton.Size = UDim2.new(0, 70, 0, 70)
+    MinimizeButton.Image = "rbxassetid://116016360488191" -- COLOQUE O ID DA SUA LOGO AQUI
+    MinimizeButton.ScaleType = Enum.ScaleType.Fit
+    MinimizeButton.Visible = false
+    
+    -- Borda arredondada
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 12)
+    Corner.Parent = MinimizeButton
+    
+    -- Sombra
+    local Shadow = Instance.new("ImageLabel")
+    Shadow.Name = "Shadow"
+    Shadow.Parent = MinimizeButton
+    Shadow.BackgroundTransparency = 1
+    Shadow.Position = UDim2.new(0, -5, 0, -5)
+    Shadow.Size = UDim2.new(1, 10, 1, 10)
+    Shadow.ZIndex = 0
+    Shadow.Image = "rbxassetid://5554236805"
+    Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    Shadow.ImageTransparency = 0.5
+    Shadow.ScaleType = Enum.ScaleType.Slice
+    Shadow.SliceCenter = Rect.new(23, 23, 277, 277)
+    
+    -- Texto opcional (caso queira adicionar)
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Name = "Label"
+    TextLabel.Parent = MinimizeButton
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Position = UDim2.new(0, 0, 1, 5)
+    TextLabel.Size = UDim2.new(1, 0, 0, 20)
+    TextLabel.Font = Enum.Font.GothamBold
+    TextLabel.Text = "Allan Hub"
+    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.TextSize = 10
+    TextLabel.TextTransparency = 0.3
+    
+    -- Arrastar o botão
+    local dragging = false
+    local dragInput, mousePos, framePos
+    
+    MinimizeButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            framePos = MinimizeButton.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    MinimizeButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - mousePos
+            MinimizeButton.Position = UDim2.new(
+                framePos.X.Scale,
+                framePos.X.Offset + delta.X,
+                framePos.Y.Scale,
+                framePos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    ScreenGui.Parent = CoreGui
+    
+    return ScreenGui, MinimizeButton
+end
+
+local MinimizeGui, MinimizeButton = CreateMinimizeButton()
 
 -- =====================================================
 -- FLUENT + SAVE
@@ -26,8 +123,8 @@ local SaveManager = loadstring(game:HttpGet(
 ))()
 
 local Window = Fluent:CreateWindow({
-Title = "Bug Hub",
-SubTitle = "By AllanHeberty",
+Title = "Allan Hub",
+SubTitle = "Auto Dungeon + Auto Rebirth + Castle",
 TabWidth = 160,
 Size = UDim2.fromOffset(540, 420),
 Acrylic = true,
@@ -39,12 +136,77 @@ SaveManager:SetLibrary(Fluent)
 SaveManager:SetFolder("AllanHub")
 
 -- =====================================================
+-- CONTROLE DE MINIMIZAÇÃO CUSTOMIZADO
+-- =====================================================
+local WindowVisible = true
+
+local function ToggleWindow()
+    WindowVisible = not WindowVisible
+    
+    if WindowVisible then
+        -- Mostrar janela
+        Window:SetOpen(true)
+        MinimizeButton.Visible = false
+        
+        -- Animação do botão
+        TweenService:Create(MinimizeButton, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
+            ImageTransparency = 1
+        }):Play()
+    else
+        -- Esconder janela
+        Window:SetOpen(false)
+        MinimizeButton.Visible = true
+        MinimizeButton.Size = UDim2.new(0, 0, 0, 0)
+        MinimizeButton.BackgroundTransparency = 1
+        MinimizeButton.ImageTransparency = 1
+        
+        -- Animação do botão
+        TweenService:Create(MinimizeButton, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 70, 0, 70),
+            BackgroundTransparency = 0.3,
+            ImageTransparency = 0
+        }):Play()
+    end
+end
+
+-- Clique no botão de minimizar
+MinimizeButton.MouseButton1Click:Connect(function()
+    ToggleWindow()
+end)
+
+-- Detectar quando a janela é fechada pela tecla End
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.End then
+        task.wait(0.1) -- Pequeno delay para permitir que o Fluent processe primeiro
+        if not WindowVisible then
+            ToggleWindow()
+        else
+            WindowVisible = false
+            MinimizeButton.Visible = true
+            MinimizeButton.Size = UDim2.new(0, 0, 0, 0)
+            MinimizeButton.BackgroundTransparency = 1
+            MinimizeButton.ImageTransparency = 1
+            
+            TweenService:Create(MinimizeButton, TweenInfo.new(0.3), {
+                Size = UDim2.new(0, 70, 0, 70),
+                BackgroundTransparency = 0.3,
+                ImageTransparency = 0
+            }):Play()
+        end
+    end
+end)
+
+-- =====================================================
 -- TABS
 -- =====================================================
 local Tabs = {
-Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "swords" }),
-Castle = Window:AddTab({ Title = "Castelo Infernal", Icon = "flame" }),
-Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+    Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "swords" }),
+    Castle  = Window:AddTab({ Title = "Castelo Infernal", Icon = "flame" }),
+    Islands = Window:AddTab({ Title = "Islands", Icon = "map" }),
+    Settings= Window:AddTab({ Title = "Settings", Icon = "settings" }),
 }
 
 -- =====================================================
@@ -331,27 +493,29 @@ local function castleInfLoop()
         end
     end)
 end
+-- AUTO CASTLE - CRIAÇÃO, DETECÇÃO E RECRIAÇÃO (CORRIGIDO)
+-- ==========================
 
--- Auto Castle Loop
 local function autoCastleLoop()
     task.spawn(function()
         while castleEnabled do
             local currentFloor = getCurrentCastleFloor()
 
             if not currentFloor then
-                -- Fora do castelo → criar, comprar ticket e entrar
-                createCastle()
-                task.wait(1)
+                -- Fora do castelo → comprar ticket, criar e entrar
                 buyCastleTicket()
+                task.wait(1)
+                createCastle()
                 task.wait(1)
                 joinCastle(entryFloor)
                 task.wait(5)
             else
                 -- Dentro do castelo - verifica se deve recriar
                 if currentFloor >= resetFloor then
-                    createCastle()
-                    task.wait(1)
+                    -- PAGAR → CRIAR → ENTRAR
                     buyCastleTicket()
+                    task.wait(1)
+                    createCastle()
                     task.wait(1)
                     joinCastle(entryFloor)
                     task.wait(5)
@@ -367,17 +531,20 @@ local function autoCastleLoop()
     end)
 end
 
--- Castle Create Only Loop
+-- ==========================
+-- AUTO CASTLE - APENAS CRIAR (LOOP CONTÍNUO SEM RESET)
+-- ==========================
+
 local function castleCreateOnlyLoop()
     task.spawn(function()
         while castleCreateOnlyEnabled do
             local currentFloor = getCurrentCastleFloor()
 
             if not currentFloor then
-                -- Fora do castelo → criar, comprar ticket e entrar
-                createCastle()
-                task.wait(1)
+                -- Fora do castelo → comprar ticket, criar e entrar
                 buyCastleTicket()
+                task.wait(1)
+                createCastle()
                 task.wait(1)
                 joinCastle(entryFloor)
                 task.wait(5)
@@ -452,9 +619,9 @@ Tabs.Castle:AddToggle("AutoCastle", {
         Config.AutoCastle = state
 
         if state then
-            createCastle()
-            task.wait(1)
             buyCastleTicket()
+            task.wait(1)
+            createCastle()
             task.wait(1)
             joinCastle(entryFloor)
             task.wait(2)
@@ -537,7 +704,6 @@ Tabs.Castle:AddToggle("EnableCastleSpeed", {
         end
     end
 })
-
 -- =====================================================
 -- SETTINGS TAB
 -- =====================================================
@@ -554,56 +720,102 @@ local SpawnConfirmTime = 0
 local currentTween = nil
 
 -- =====================================================
+-- LEVEL CHECK (ARISE CROSSOVER)
+-- =====================================================
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local ExpText = PlayerGui
+    :WaitForChild("Hud")
+    :WaitForChild("BottomContainer")
+    :WaitForChild("ExpBar")
+    :WaitForChild("ExpText")
+
+local function GetLevelInfo()
+    local text = ExpText.Text
+    if not text then return nil, false end
+
+    local level = tonumber(string.match(text, "Level:%s*(%d+)"))
+
+    if string.find(text, "MAX") then
+        return level, true
+    end
+
+    local cur, need = string.match(text, "%((%d+)%/(%d+)%)")
+    if cur and need and tonumber(need) == 0 then
+        return level, true
+    end
+
+    return level, false
+end
+
+-- =====================================================
+-- LEAVE DUNGEON
+-- =====================================================
+local function leaveDungeon()
+    local args = {
+        [1] = {
+            [1] = { Event = "LeaveDungeon" },
+            [2] = "\4"
+        }
+    }
+    pcall(function()
+        game:GetService("ReplicatedStorage")
+            .BridgeNet2
+            .dataRemoteEvent
+            :FireServer(unpack(args))
+    end)
+end
+
+-- =====================================================
 -- BUY TICKET
 -- =====================================================
 local function BuyTicket()
-Remote:FireServer(unpack({
-[1] = {
-[1] = { Event = "DungeonAction", Action = "BuyTicket" },
-[2] = "\4"
-}
-}))
+    Remote:FireServer(unpack({
+        [1] = {
+            [1] = { Event = "DungeonAction", Action = "BuyTicket" },
+            [2] = "\4"
+        }
+    }))
 end
 
 -- =====================================================
 -- CREATE + START DUNGEON
 -- =====================================================
 local function CreateDungeon()
-if Creating or StartingDungeon then return end
+    if Creating or StartingDungeon then return end
 
-Creating = true  
-StartingDungeon = true  
-Status:SetDesc("Creating Dungeon")  
+    Creating = true
+    StartingDungeon = true
+    Status:SetDesc("Creating Dungeon")
 
-if Config.AutoBuyTicket then  
-    BuyTicket()  
-    task.wait(1.2)  
-end  
+    if Config.AutoBuyTicket then
+        BuyTicket()
+        task.wait(1.2)
+    end
 
-Remote:FireServer(unpack({  
-    [1] = {  
-        [1] = { Event = "DungeonAction", Action = "Create" },  
-        [2] = "\4"  
-    }  
-}))  
+    Remote:FireServer(unpack({
+        [1] = {
+            [1] = { Event = "DungeonAction", Action = "Create" },
+            [2] = "\4"
+        }
+    }))
 
-task.wait(2)  
+    task.wait(2)
 
-Remote:FireServer(unpack({  
-    [1] = {  
-        [1] = {  
-            Event = "DungeonAction",  
-            Action = "Start",  
-            Dungeon = Player.UserId  
-        },  
-        [2] = "\4"  
-    }  
-}))  
+    Remote:FireServer(unpack({
+        [1] = {
+            [1] = {
+                Event = "DungeonAction",
+                Action = "Start",
+                Dungeon = Player.UserId
+            },
+            [2] = "\4"
+        }
+    }))
 
-task.delay(2.2, function()  
-    Creating = false  
-end)
-
+    task.delay(2.2, function()
+        Creating = false
+    end)
 end
 
 -- =====================================================
@@ -612,149 +824,256 @@ end
 local EnemiesFolder = workspace.__Main.__Enemies.Server
 
 local function GetClosestEnemy()
-local char = Player.Character
-local root = char and char:FindFirstChild("HumanoidRootPart")
-if not root then return nil end
+    local char = Player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
 
-local pos = root.Position  
-local best, dist = nil, math.huge  
+    local pos = root.Position
+    local best, dist = nil, math.huge
 
-for _, e in ipairs(EnemiesFolder:GetChildren()) do  
-    local hp = e:GetAttribute("HP")  
-    if hp and hp > 0 and e.Position then  
-        local d = (pos - e.Position).Magnitude  
-        if d < dist then  
-            dist = d  
-            best = e  
-        end  
-    end  
-end  
+    for _, e in ipairs(EnemiesFolder:GetChildren()) do
+        local hp = e:GetAttribute("HP")
+        if hp and hp > 0 and e.Position then
+            local d = (pos - e.Position).Magnitude
+            if d < dist then
+                dist = d
+                best = e
+            end
+        end
+    end
 
-return best
-
+    return best
 end
 
 local function MoveToEnemy(enemy)
-local root = Player.Character.HumanoidRootPart
-if not root then return end
+    local root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-if Config.MoveMode == "Teleport" then  
-    if currentTween then currentTween:Cancel() end  
-    root.CFrame = enemy.CFrame  
-else  
-    if currentTween then currentTween:Cancel() end  
-    currentTween = TweenService:Create(  
-        root,  
-        TweenInfo.new(0.3),  
-        { CFrame = enemy.CFrame }  
-    )  
-    currentTween:Play()  
-end
+    if currentTween then currentTween:Cancel() end
 
+    if Config.MoveMode == "Teleport" then
+        root.CFrame = enemy.CFrame
+    else
+        currentTween = TweenService:Create(
+            root,
+            TweenInfo.new(0.3),
+            { CFrame = enemy.CFrame }
+        )
+        currentTween:Play()
+    end
 end
 
 -- =====================================================
 -- AUTO DUNGEON LOOP
 -- =====================================================
 RunService.Heartbeat:Connect(function(dt)
-if not Config.AutoFarm then
-DungeonRunning = false
-SpawnConfirmTime = 0
-return
-end
+    if not Config.AutoFarm then
+        DungeonRunning = false
+        SpawnConfirmTime = 0
+        return
+    end
 
-local enemy = GetClosestEnemy()  
+    local enemy = GetClosestEnemy()
 
-if enemy then  
-    Status:SetDesc("Farming (" .. Config.MoveMode .. ")")  
-    DungeonRunning = true  
-    StartingDungeon = false  
-    SpawnConfirmTime = 0  
-    MoveToEnemy(enemy)  
-    return  
-end  
+    if enemy then
+        Status:SetDesc("Farming (" .. Config.MoveMode .. ")")
+        DungeonRunning = true
+        StartingDungeon = false
+        SpawnConfirmTime = 0
+        MoveToEnemy(enemy)
+        return
+    end
 
-if DungeonRunning then  
-    SpawnConfirmTime += dt  
-    Status:SetDesc(string.format("Finishing Dungeon... %.1fs", SpawnConfirmTime))  
+    if DungeonRunning then
+        SpawnConfirmTime += dt
+        Status:SetDesc(string.format("Finishing Dungeon... %.1fs", SpawnConfirmTime))
 
-    if SpawnConfirmTime >= 1.8 then  
-        Status:SetDesc("Dungeon Solada → Recriando")  
-        DungeonRunning = false  
-        SpawnConfirmTime = 0  
-        CreateDungeon()  
-    end  
-else  
-    if StartingDungeon then  
-        Status:SetDesc("Starting Dungeon...")  
-    else  
-        Status:SetDesc("Waiting Dungeon Start")  
-        CreateDungeon()  
-    end  
-end
-
+        if SpawnConfirmTime >= 1.8 then
+            Status:SetDesc("Dungeon Solada → Recriando")
+            DungeonRunning = false
+            SpawnConfirmTime = 0
+            CreateDungeon()
+        end
+    else
+        if StartingDungeon then
+            Status:SetDesc("Starting Dungeon...")
+        else
+            Status:SetDesc("Waiting Dungeon Start")
+            CreateDungeon()
+        end
+    end
 end)
 
 -- =====================================================
--- AUTO RENASCIMENTO (OTIMIZADO)
+-- AUTO REBIRTH + LEVEL MAX HANDLER
 -- =====================================================
 task.spawn(function()
-local lastExp, lastShadow, lastRebirth = 0, 0, 0
+    local lastExp, lastShadow = 0, 0
+    local handlingMax = false
 
-while true do  
-    task.wait(1)  
+    while true do
+        task.wait(1)
 
-    if not Config.AutoRebirth then  
-        lastExp, lastShadow, lastRebirth = 0, 0, 0  
-        continue  
-    end  
+        if not Config.AutoRebirth then
+            lastExp, lastShadow = 0, 0
+            handlingMax = false
+            continue
+        end
 
-    local now = os.clock()  
+        local level, isMax = GetLevelInfo()
 
-    if now - lastExp >= 30 then  
-        lastExp = now  
-        Remote:FireServer(unpack({  
-            [1] = {  
-                [1] = {  
-                    Stats = "PlayerExp",  
-                    Event = "StatsUp",  
-                    Points = 200  
-                },  
-                [2] = "\4"  
-            }  
-        }))  
-    end  
+        if isMax and not handlingMax then
+            handlingMax = true
+            Status:SetDesc("LEVEL MAX → Rebirth")
 
-    if now - lastShadow >= 40 then  
-        lastShadow = now  
-        Remote:FireServer(unpack({  
-            [1] = {  
-                [1] = {  
-                    Stats = "ShadowRange",  
-                    Event = "StatsUp",  
-                    Points = 200  
-                },  
-                [2] = "\4"  
-            }  
-        }))  
-    end  
+            DungeonRunning = false
+            StartingDungeon = false
+            Creating = false
 
-    if now - lastRebirth >= 600 then  
-        lastRebirth = now  
-        Remote:FireServer(unpack({  
-            [1] = {  
-                [1] = { Event = "RebirthPlayer" },  
-                [2] = "\4"  
-            }  
-        }))  
-    end  
+            leaveDungeon()
+            task.wait(2)
+
+            Remote:FireServer(unpack({
+                [1] = {
+                    [1] = { Event = "RebirthPlayer" },
+                    [2] = "\4"
+                }
+            }))
+
+            task.wait(5)
+            handlingMax = false
+            Status:SetDesc("Rebirth OK → Dungeon ON")
+            continue
+        end
+
+        local now = os.clock()
+
+        if now - lastExp >= 30 then
+            lastExp = now
+            Remote:FireServer(unpack({
+                [1] = {
+                    [1] = {
+                        Stats = "PlayerExp",
+                        Event = "StatsUp",
+                        Points = 200
+                    },
+                    [2] = "\4"
+                }
+            }))
+        end
+
+        if now - lastShadow >= 40 then
+            lastShadow = now
+            Remote:FireServer(unpack({
+                [1] = {
+                    [1] = {
+                        Stats = "ShadowRange",
+                        Event = "StatsUp",
+                        Points = 200
+                    },
+                    [2] = "\4"
+                }
+            }))
+        end
+    end
+end)
+
+
+-- Variáveis
+local SelectedIslandName = nil
+local IslandMap = {}
+
+-- Funções
+local function GetWorld()
+    local extra = workspace:FindFirstChild("__Extra")
+    if not extra then return nil end
+    return extra:FindFirstChild("__Spawns")
 end
 
+local function GetIslandDisplayName(island)
+    if island:GetAttribute("DisplayName") then return island:GetAttribute("DisplayName") end
+    if island:GetAttribute("Name") then return island:GetAttribute("Name") end
+    for _, child in ipairs(island:GetChildren()) do
+        if child:IsA("StringValue") then
+            return child.Value
+        end
+    end
+    return island.Name
+end
+
+local function ScanIslands()
+    table.clear(IslandMap)
+    local World = GetWorld()
+    if not World then return {} end
+    local list = {}
+    for _, island in ipairs(World:GetChildren()) do
+        local displayName = GetIslandDisplayName(island)
+        IslandMap[displayName] = island
+        table.insert(list, displayName)
+    end
+    table.sort(list)
+    return list
+end
+
+local function TeleportToIsland(islandModel)
+    local char = Players.LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    if islandModel.GetPivot then
+        hrp.CFrame = islandModel:GetPivot() * CFrame.new(0, 10, 0)
+    elseif islandModel.PrimaryPart then
+        hrp.CFrame = islandModel.PrimaryPart.CFrame * CFrame.new(0, 10, 0)
+    elseif islandModel:IsA("BasePart") then
+        hrp.CFrame = islandModel.CFrame * CFrame.new(0, 10, 0)
+    end
+end
+
+-- Dropdown e botão dentro da aba Islands
+local IslandDropdown = Tabs.Islands:AddDropdown("IslandDropdown", {
+    Title = "Ilhas,
+    Values = ScanIslands(),
+    Multi = false,
+    Callback = function(value)
+        SelectedIslandName = value
+    end
+})
+
+Tabs.Islands:AddButton({
+    Title = "Teleportar Ilha Selecionada",
+    Description = "Vai para a ilha escolhida no dropdown",
+    Callback = function()
+        if not SelectedIslandName then
+            Fluent:Notify({
+                Title = "Erro",
+                Content = "Nenhuma ilha selecionada",
+                Duration = 3
+            })
+            return
+        end
+        local islandModel = IslandMap[SelectedIslandName]
+        if islandModel then
+            TeleportToIsland(islandModel)
+            Fluent:Notify({
+                Title = "Teleport",
+                Content = "Você foi para " .. SelectedIslandName,
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- Atualização automática do dropdown
+task.spawn(function()
+    while task.wait(6) do
+        if IslandDropdown then
+            IslandDropdown:SetValues(ScanIslands())
+        end
+    end
 end)
 
 -- =====================================================
 -- NOTIFY
--- ==========================
+-- =====================================================
 Fluent:Notify({
 Title = "Allan Hub",
 Content = "Auto Dungeon + Auto Renascimento + Castle carregado",
