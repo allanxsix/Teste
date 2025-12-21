@@ -711,6 +711,24 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 SaveManager:LoadAutoloadConfig()
 
 -- =====================================================
+-- SERVICES
+-- =====================================================
+local Player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Remote = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
+
+-- =====================================================
+-- CONFIG
+-- =====================================================
+local Config = {
+    AutoFarm = true,
+    AutoRebirth = true,
+    AutoBuyTicket = true,
+    MoveMode = "Teleport", -- Teleport ou Tween
+}
+
+-- =====================================================
 -- STATES DUNGEON
 -- =====================================================
 local Creating = false
@@ -736,10 +754,12 @@ local function GetLevelInfo()
 
     local level = tonumber(string.match(text, "Level:%s*(%d+)"))
 
+    -- Detecta MAX pelo texto
     if string.find(text, "MAX") then
         return level, true
     end
 
+    -- Detecta MAX por XP (0/0)
     local cur, need = string.match(text, "%((%d+)%/(%d+)%)")
     if cur and need and tonumber(need) == 0 then
         return level, true
@@ -758,11 +778,9 @@ local function leaveDungeon()
             [2] = "\4"
         }
     }
+
     pcall(function()
-        game:GetService("ReplicatedStorage")
-            .BridgeNet2
-            .dataRemoteEvent
-            :FireServer(unpack(args))
+        Remote:FireServer(unpack(args))
     end)
 end
 
@@ -786,7 +804,6 @@ local function CreateDungeon()
 
     Creating = true
     StartingDungeon = true
-    Status:SetDesc("Creating Dungeon")
 
     if Config.AutoBuyTicket then
         BuyTicket()
@@ -849,11 +866,11 @@ local function MoveToEnemy(enemy)
     local root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
     if not root then return end
 
-    if currentTween then currentTween:Cancel() end
-
     if Config.MoveMode == "Teleport" then
+        if currentTween then currentTween:Cancel() end
         root.CFrame = enemy.CFrame
     else
+        if currentTween then currentTween:Cancel() end
         currentTween = TweenService:Create(
             root,
             TweenInfo.new(0.3),
@@ -876,7 +893,6 @@ RunService.Heartbeat:Connect(function(dt)
     local enemy = GetClosestEnemy()
 
     if enemy then
-        Status:SetDesc("Farming (" .. Config.MoveMode .. ")")
         DungeonRunning = true
         StartingDungeon = false
         SpawnConfirmTime = 0
@@ -886,19 +902,16 @@ RunService.Heartbeat:Connect(function(dt)
 
     if DungeonRunning then
         SpawnConfirmTime += dt
-        Status:SetDesc(string.format("Finishing Dungeon... %.1fs", SpawnConfirmTime))
 
         if SpawnConfirmTime >= 1.8 then
-            Status:SetDesc("Dungeon Solada → Recriando")
             DungeonRunning = false
             SpawnConfirmTime = 0
             CreateDungeon()
         end
     else
         if StartingDungeon then
-            Status:SetDesc("Starting Dungeon...")
+            -- aguardando o iniciar
         else
-            Status:SetDesc("Waiting Dungeon Start")
             CreateDungeon()
         end
     end
@@ -924,15 +937,16 @@ task.spawn(function()
 
         if isMax and not handlingMax then
             handlingMax = true
-            Status:SetDesc("LEVEL MAX → Rebirth")
 
+            -- Sai do dungeon
             DungeonRunning = false
             StartingDungeon = false
             Creating = false
-
             leaveDungeon()
+
             task.wait(2)
 
+            -- Rebirth
             Remote:FireServer(unpack({
                 [1] = {
                     [1] = { Event = "RebirthPlayer" },
@@ -942,7 +956,6 @@ task.spawn(function()
 
             task.wait(5)
             handlingMax = false
-            Status:SetDesc("Rebirth OK → Dungeon ON")
             continue
         end
 
