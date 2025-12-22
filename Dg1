@@ -1,4 +1,5 @@
 repeat task.wait() until game:IsLoaded()
+
 -- =====================================================
 -- SERVICES
 -- =====================================================
@@ -7,8 +8,30 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+
 local Player = Players.LocalPlayer
 local Remote = ReplicatedStorage.BridgeNet2.dataRemoteEvent
+
+-- =====================================================
+-- SAFE FIRE (ANTI UPDATE)
+-- =====================================================
+-- =====================================================
+-- SAFE FIRE (BRIDGENET2 CORRETO)
+-- =====================================================
+local function SafeFire(payload)
+    local ok, err = pcall(function()
+        Remote:FireServer({
+            payload,
+            "\4"
+        })
+    end)
+
+    if not ok then
+        warn("SafeFire error:", err, payload)
+    end
+end
+
+
 -- =====================================================
 -- LEVEL CHECK (ARISE CROSSOVER - HUD REAL)
 -- =====================================================
@@ -679,148 +702,207 @@ Config.CastleSpeedEnabled = state
     end
 end
 })
+
 -- =====================================================
--- SETTINGS TAB
+-- DUNGEON (BRIDGENET2 - IGUAL AO RUNE MANAGER)
 -- =====================================================
-SaveManager:BuildConfigSection(Tabs.Settings)
-SaveManager:LoadAutoloadConfig()
--- =====================================================
--- STATES DUNGEON (NOVA VERSÃO COM REBIRTH)
--- =====================================================
+
+-- Bridge (igual ao script funcional)
+local BridgeNet2 = require(ReplicatedStorage:WaitForChild("BridgeNet2"))
+local DungeonBridge = BridgeNet2.ReferenceBridge("GENERAL_EVENT")
+
+-- STATES
 local Creating = false
 local StartingDungeon = false
 local DungeonRunning = false
 local SpawnConfirmTime = 0
 local currentTween = nil
 local Rebirthing = false
--- =====================================================
--- BUY TICKET
--- =====================================================
-local function BuyTicket()
-Remote:FireServer(unpack({
-[1] = {
-[1] = { Event = "DungeonAction", Action = "BuyTicket" },
-[2] = "\4"
-}
-}))
-end
--- =====================================================
--- CREATE + START DUNGEON (ATUALIZADO)
--- =====================================================
-local function CreateDungeon()
-if Creating or StartingDungeon or Rebirthing then return end
-Creating = true
-StartingDungeon = true
-Status:SetDesc("Creating Dungeon")
 
-if Config.AutoBuyTicket then
-    BuyTicket()
-    task.wait(1.2)
+-- =====================================================
+-- SAFE FIRE (BRIDGENET2)
+-- =====================================================
+local function SafeFire(payload)
+    if not DungeonBridge then return end
+    pcall(function()
+        DungeonBridge:Fire(payload)
+    end)
 end
 
-Remote:FireServer(unpack({
-    [1] = {
-        [1] = { Event = "DungeonAction", Action = "Create" },
-        [2] = "\4"
-    }
-}))
-
-task.wait(2)
-
-Remote:FireServer(unpack({
-    [1] = {
-        [1] = {
-            Event = "DungeonAction",
-            Action = "Start",
-            Dungeon = Player.UserId
-        },
-        [2] = "\4"
-    }
-}))
-
-task.delay(2.2, function()
-    Creating = false
-end)
-end
 -- =====================================================
--- ENEMIES
+-- RUNAS
 -- =====================================================
-local EnemiesFolder = workspace.__Main.__Enemies.Server
-local function GetClosestEnemy()
-local char = Player.Character
-local root = char and char:FindFirstChild("HumanoidRootPart")
-if not root then return nil end
-local pos = root.Position
-local best, dist = nil, math.huge
+local MAX_RUNE_SLOTS = 5
+local RuneSlots = {}
+for i = 1, MAX_RUNE_SLOTS do RuneSlots[i] = "" end
 
-for _, e in ipairs(EnemiesFolder:GetChildren()) do
-    local hp = e:GetAttribute("HP")
-    if hp and hp > 0 and e.Position then
-        local d = (pos - e.Position).Magnitude
-        if d < dist then
-            dist = d
-            best = e
+local ItemsInfo = require(
+    ReplicatedStorage:WaitForChild("Indexer"):WaitForChild("ItemsInfo")
+)
+
+local AvailableRunes = {}
+for id, data in pairs(ItemsInfo) do
+    if typeof(data) == "table" then
+        if data.Type == "Rune" or data.Type == "DungeonRune" then
+            table.insert(AvailableRunes, {
+                Id = id,
+                Name = data.Name or tostring(id)
+            })
         end
     end
 end
 
-return best
+local function GetRuneIdByName(name)
+    for _, r in ipairs(AvailableRunes) do
+        if r.Name == name then
+            return r.Id
+        end
+    end
+    return ""
 end
-local function MoveToEnemy(enemy)
-local root = Player.Character.HumanoidRootPart
-if not root then return end
-if Config.MoveMode == "Teleport" then
-    if currentTween then currentTween:Cancel() end
-    root.CFrame = enemy.CFrame
-else
-    if currentTween then currentTween:Cancel() end
-    currentTween = TweenService:Create(
-        root,
-        TweenInfo.new(0.3),
-        { CFrame = enemy.CFrame }
-    )
-    currentTween:Play()
-end
-end
+
 -- =====================================================
--- AUTO DUNGEON LOOP (NOVA VERSÃO)
+-- BUY TICKET
+-- =====================================================
+local function BuyTicket()
+    SafeFire({
+        Event = "DungeonAction",
+        Action = "BuyTicket"
+    })
+end
+
+-- =====================================================
+-- APPLY RUNES
+-- =====================================================
+local function ApplyRunes()
+    for slot = 1, MAX_RUNE_SLOTS do
+        local runeId = RuneSlots[slot]
+        if runeId ~= "" then
+            SafeFire({
+                Event = "DungeonAction",
+                Action = "AddItem",
+                Slot = slot,
+                Item = runeId
+            })
+            task.wait(0.15)
+        end
+    end
+end
+
+-- =====================================================
+-- CREATE DUNGEON (IGUAL AO SCRIPT FUNCIONAL)
+-- =====================================================
+local function CreateDungeon()
+    if Creating or StartingDungeon or Rebirthing then return end
+
+    Creating = true
+    StartingDungeon = true
+    Status:SetDesc("Creating Dungeon")
+
+    if Config.AutoBuyTicket then
+        BuyTicket()
+        task.wait(1)
+    end
+
+    -- CREATE
+    SafeFire({
+        Event = "DungeonAction",
+        Action = "Create"
+    })
+
+    task.wait(0.6)
+
+    -- RUNAS
+    ApplyRunes()
+
+    task.wait(0.5)
+
+    -- START
+    SafeFire({
+        Event = "DungeonAction",
+        Action = "Start"
+    })
+
+    task.delay(2, function()
+        Creating = false
+    end)
+end
+
+-- =====================================================
+-- ENEMIES
+-- =====================================================
+local EnemiesFolder = workspace.__Main.__Enemies.Server
+
+local function GetClosestEnemy()
+    local char = Player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+
+    local best, dist = nil, math.huge
+    for _, e in ipairs(EnemiesFolder:GetChildren()) do
+        local hp = e:GetAttribute("HP")
+        if hp and hp > 0 and e.Position then
+            local d = (root.Position - e.Position).Magnitude
+            if d < dist then
+                dist = d
+                best = e
+            end
+        end
+    end
+    return best
+end
+
+local function MoveToEnemy(enemy)
+    local root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    if currentTween then currentTween:Cancel() end
+
+    if Config.MoveMode == "Teleport" then
+        root.CFrame = enemy.CFrame
+    else
+        currentTween = TweenService:Create(
+            root,
+            TweenInfo.new(0.3),
+            { CFrame = enemy.CFrame }
+        )
+        currentTween:Play()
+    end
+end
+
+-- =====================================================
+-- AUTO DUNGEON LOOP
 -- =====================================================
 RunService.Heartbeat:Connect(function(dt)
-if not Config.AutoFarm or Rebirthing then
-DungeonRunning = false
-SpawnConfirmTime = 0
-Status:SetDesc("Idle")
-return
-end
-local enemy = GetClosestEnemy()
-
-if enemy then
-    Status:SetDesc("Farming (" .. Config.MoveMode .. ")")
-    DungeonRunning = true
-    StartingDungeon = false
-    SpawnConfirmTime = 0
-    MoveToEnemy(enemy)
-    return
-end
-
-if DungeonRunning then
-    SpawnConfirmTime += dt
-    Status:SetDesc(string.format("Finishing Dungeon... %.1fs", SpawnConfirmTime))
-
-    if SpawnConfirmTime >= 1.8 then
-        Status:SetDesc("Dungeon Solada → Recriando")
+    if not Config.AutoFarm or Rebirthing then
         DungeonRunning = false
         SpawnConfirmTime = 0
-        CreateDungeon()
+        Status:SetDesc("Idle")
+        return
     end
-else
-    if StartingDungeon then
-        Status:SetDesc("Starting Dungeon...")
+
+    local enemy = GetClosestEnemy()
+
+    if enemy then
+        DungeonRunning = true
+        StartingDungeon = false
+        SpawnConfirmTime = 0
+        Status:SetDesc("Farming (" .. Config.MoveMode .. ")")
+        MoveToEnemy(enemy)
+        return
+    end
+
+    if DungeonRunning then
+        SpawnConfirmTime += dt
+        Status:SetDesc(("Finishing Dungeon... %.1fs"):format(SpawnConfirmTime))
+        if SpawnConfirmTime >= 1.8 then
+            DungeonRunning = false
+            SpawnConfirmTime = 0
+            CreateDungeon()
+        end
     else
-        Status:SetDesc("Waiting Dungeon Start")
         CreateDungeon()
     end
-end
 end)
 -- =====================================================
 -- AUTO REBIRTH (APENAS NO LEVEL MAX) + DELAY 10s
@@ -956,4 +1038,3 @@ Title = "Allan Hub",
 Content = "Auto Dungeon + Auto Rebirth (MAX Level) + Castle carregado",
 Duration = 6
 })
-
