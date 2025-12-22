@@ -152,7 +152,7 @@ local SaveManager = loadstring(game:HttpGet(
 ))()
 local Window = Fluent:CreateWindow({
 Title = "Allan Hub",
-SubTitle = "By AllanGPT,
+SubTitle = "By Allan lindo",
 TabWidth = 160,
 Size = UDim2.fromOffset(540, 420),
 Acrylic = true,
