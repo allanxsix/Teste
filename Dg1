@@ -603,7 +603,7 @@ local function getCurrentCastleFloor()
     if not world then return nil end
 
     local current = nil
-    for i = 1, 300 do
+    for i = 1, 800 do
         if world:FindFirstChild("Room_" .. i) then
             current = i
         end
