@@ -1,11 +1,8 @@
--- =====================================================
--- ESPERA O JOGO CARREGAR
--- =====================================================
-repeat task.wait() until game:IsLoaded()
+_ENV = (getgenv or getrenv or getfenv)()
 
--- =====================================================
--- SERVICES
--- =====================================================
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -13,12 +10,19 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
-
 local Player = Players.LocalPlayer
+local lastNotificationTime = 0
+local notificationCooldown = 10
+local currentTime = tick()
+if currentTime - lastNotificationTime >= notificationCooldown then
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Allan hub",
+        Text = "Loading",
+        Duration = 5
+    })
+    lastNotificationTime = currentTime
+end
 
--- =====================================================
--- BRIDGENET2 (BASE ÚNICA – NÃO DUPLICAR)
--- =====================================================
 local BridgeNet2 = require(ReplicatedStorage:WaitForChild("BridgeNet2"))
 local DungeonBridge = BridgeNet2.ReferenceBridge("GENERAL_EVENT")
 
@@ -32,12 +36,7 @@ local function SafeFire(payload)
     end
 end
 
--- =====================================================
--- FLUENT UI + SAVE MANAGER
--- =====================================================
-local Fluent = loadstring(game:HttpGet(
-    "https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"
-))()
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local SaveManager = loadstring(game:HttpGet(
     "https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"
@@ -50,21 +49,55 @@ local Window = Fluent:CreateWindow({
     Size = UDim2.fromOffset(560, 440),
     Acrylic = true,
     Theme = "dark",
-    MinimizeKey = Enum.KeyCode.End
+    MinimizeKey = Enum.KeyCode.LeftControl
 })
 
 SaveManager:SetLibrary(Fluent)
 SaveManager:SetFolder("AllanHub")
 
--- =====================================================
--- TABS
--- =====================================================
 local Tabs = {
-    Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "swords" }),
-    Castle  = Window:AddTab({ Title = "Castelo Infernal", Icon = "flame" }),
-    Islands = Window:AddTab({ Title = "Islands", Icon = "map" }),
-    Settings= Window:AddTab({ Title = "Settings", Icon = "settings" })
+    Dungeon = Window:AddTab({ Title = "Tab Dungeon", Icon = "swords" }),
+    Castle  = Window:AddTab({ Title = "Tab Castelo Infernal", Icon = "flame" }),
+    Islands = Window:AddTab({ Title = "Tab Islands", Icon = "map" }),
+    Settings= Window:AddTab({ Title = "Tab Settings", Icon = "settings" })
 }
+local Players = game:GetService("Players")
+local ContentProvider = game:GetService("ContentProvider")
+local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+local existingGui = playerGui:FindFirstChild("CustomScreenGui")
+if existingGui then
+    existingGui:Destroy()
+end
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CustomScreenGui"
+ScreenGui.Parent = playerGui
+local Button = Instance.new("ImageButton")
+Button.Name = "CustomButton"
+Button.Parent = ScreenGui
+Button.Size = UDim2.new(0, 50, 0, 50)
+Button.Position = UDim2.new(0.015, 0, 0.02, 20)
+Button.BackgroundTransparency = 1
+Button.Image = "rbxassetid://112254107346248"
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.Parent = Button
+local imageLoaded = false
+ContentProvider:PreloadAsync({Button.Image}, function()
+    imageLoaded = true
+end)
+Button.MouseButton1Click:Connect(function()
+    if not imageLoaded then
+        return
+    end
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+    if VirtualInputManager then
+        task.defer(function()
+            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
+        end)
+    end
+end)
+
 
 -- =====================================================
 -- STATUS
