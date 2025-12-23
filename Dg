@@ -3,6 +3,10 @@ _ENV = (getgenv or getrenv or getfenv)()
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
+
+-- =====================================================
+-- SERVICES
+-- =====================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -11,18 +15,110 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local Player = Players.LocalPlayer
+
+-- =====================================================
+-- SISTEMA DE SALVAMENTO JSON
+-- =====================================================
+local SETTINGS_FILE = "AllanHub_Settings.json"
+
+local Settings = {
+    -- Dungeon
+    AutoFarm = false,
+    AutoBuyTicket = false,
+    MoveMode = "Tween",
+    UseRunesAuto = false,
+    AutoRebirth = false,
+    
+    -- Runas
+    RuneSlot1 = "Nenhuma",
+    RuneSlot2 = "Nenhuma",
+    RuneSlot3 = "Nenhuma",
+    RuneSlot4 = "Nenhuma",
+    RuneSlot5 = "Nenhuma",
+    
+    -- Castle
+    CastleInf = false,
+    AutoCastle = false,
+    CastleCreateOnly = false,
+    CastleSpeed = "1",
+    CastleSpeedEnabled = false,
+    EntryFloor = 1,
+    ResetFloor = 100
+}
+
+local function SaveSettings()
+    if not writefile then 
+        warn("⚠️ Executor não suporta writefile!")
+        return 
+    end
+    
+    local success, err = pcall(function()
+        local encoded = HttpService:JSONEncode(Settings)
+        writefile(SETTINGS_FILE, encoded)
+        print("✅ Configurações salvas!")
+    end)
+    
+    if not success then
+        warn("❌ Erro ao salvar:", err)
+    end
+end
+
+local function LoadSettings()
+    if not readfile or not isfile then
+        warn("⚠️ Executor não suporta readfile!")
+        return
+    end
+    
+    if not isfile(SETTINGS_FILE) then
+        print("📁 Criando arquivo de configuração...")
+        SaveSettings()
+        return
+    end
+    
+    local success, err = pcall(function()
+        local data = readfile(SETTINGS_FILE)
+        local decoded = HttpService:JSONDecode(data)
+        
+        for key, value in pairs(decoded) do
+            if Settings[key] ~= nil then
+                Settings[key] = value
+            end
+        end
+        
+        print("✅ Configurações carregadas!")
+    end)
+    
+    if not success then
+        warn("❌ Erro ao carregar:", err)
+    end
+end
+
+LoadSettings()
+
+-- =====================================================
+-- CONFIG (USA SETTINGS)
+-- =====================================================
+Config = Settings
+
+-- =====================================================
+-- NOTIFICATION
+-- =====================================================
 local lastNotificationTime = 0
 local notificationCooldown = 10
 local currentTime = tick()
+
 if currentTime - lastNotificationTime >= notificationCooldown then
     game.StarterGui:SetCore("SendNotification", {
-        Title = "Allan hub",
-        Text = "Loading",
+        Title = "Allan Hub",
+        Text = "Carregando...",
         Duration = 5
     })
     lastNotificationTime = currentTime
 end
 
+-- =====================================================
+-- BRIDGENET2
+-- =====================================================
 local BridgeNet2 = require(ReplicatedStorage:WaitForChild("BridgeNet2"))
 local DungeonBridge = BridgeNet2.ReferenceBridge("GENERAL_EVENT")
 
@@ -36,15 +132,15 @@ local function SafeFire(payload)
     end
 end
 
+-- =====================================================
+-- FLUENT UI
+-- =====================================================
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-
-local SaveManager = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"
-))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 
 local Window = Fluent:CreateWindow({
     Title = "Allan Hub",
-    SubTitle = "Dungeon + Castle + Runes (FIX)",
+    SubTitle = "Dungeon + Castle + Runes + Save System",
     TabWidth = 160,
     Size = UDim2.fromOffset(560, 440),
     Acrylic = true,
@@ -55,22 +151,29 @@ local Window = Fluent:CreateWindow({
 SaveManager:SetLibrary(Fluent)
 SaveManager:SetFolder("AllanHub")
 
+-- =====================================================
+-- TABS
+-- =====================================================
 local Tabs = {
-    Dungeon = Window:AddTab({ Title = "Tab Dungeon", Icon = "swords" }),
-    Castle  = Window:AddTab({ Title = "Tab Castelo Infernal", Icon = "flame" }),
-    Islands = Window:AddTab({ Title = "Tab Islands", Icon = "map" }),
-    Settings= Window:AddTab({ Title = "Tab Settings", Icon = "settings" })
+    Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "swords" }),
+    Castle  = Window:AddTab({ Title = "Castelo Infernal", Icon = "flame" }),
+    Islands = Window:AddTab({ Title = "Islands", Icon = "map" }),
+    Settings= Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
-local Players = game:GetService("Players")
-local ContentProvider = game:GetService("ContentProvider")
-local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- =====================================================
+-- BOTÃO MINIMIZE CUSTOMIZADO
+-- =====================================================
+local playerGui = Player:WaitForChild("PlayerGui")
 local existingGui = playerGui:FindFirstChild("CustomScreenGui")
 if existingGui then
     existingGui:Destroy()
 end
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "CustomScreenGui"
 ScreenGui.Parent = playerGui
+
 local Button = Instance.new("ImageButton")
 Button.Name = "CustomButton"
 Button.Parent = ScreenGui
@@ -78,17 +181,12 @@ Button.Size = UDim2.new(0, 50, 0, 50)
 Button.Position = UDim2.new(0.015, 0, 0.02, 20)
 Button.BackgroundTransparency = 1
 Button.Image = "rbxassetid://112254107346248"
+
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(1, 0)
 UICorner.Parent = Button
-local imageLoaded = false
-ContentProvider:PreloadAsync({Button.Image}, function()
-    imageLoaded = true
-end)
+
 Button.MouseButton1Click:Connect(function()
-    if not imageLoaded then
-        return
-    end
     local VirtualInputManager = game:GetService("VirtualInputManager")
     if VirtualInputManager then
         task.defer(function()
@@ -97,7 +195,6 @@ Button.MouseButton1Click:Connect(function()
         end)
     end
 end)
-
 
 -- =====================================================
 -- STATUS
@@ -108,30 +205,7 @@ local Status = Tabs.Dungeon:AddParagraph({
 })
 
 -- =====================================================
--- CONFIG (GLOBAL – NÃO DUPLICAR)
--- =====================================================
-Config = {
-    -- Dungeon
-    AutoFarm = false,
-    AutoBuyTicket = false,
-    MoveMode = "Tween",
-    UseRunesAuto = false,
-
-    -- Rebirth
-    AutoRebirth = false,
-
-    -- Castle
-    CastleInf = false,
-    AutoCastle = false,
-    CastleCreateOnly = false,
-    CastleSpeed = "1",
-    CastleSpeedEnabled = false,
-    EntryFloor = 1,
-    ResetFloor = 100
-}
-
--- =====================================================
--- FLAGS / STATES GERAIS
+-- FLAGS / STATES
 -- =====================================================
 local CreatingDungeon = false
 local DungeonRunning = false
@@ -139,107 +213,6 @@ local StartingDungeon = false
 local Rebirthing = false
 local SpawnConfirmTime = 0
 local currentTween = nil
-
--- =====================================================
--- UI DUNGEON (BASE)
--- =====================================================
-Tabs.Dungeon:AddToggle("AutoFarmDungeon", {
-    Title = "Auto Farm Dungeon",
-    Default = false,
-    Flag = "AutoFarmDungeon",
-    Callback = function(v)
-        Config.AutoFarm = v
-    end
-})
-
-Tabs.Dungeon:AddToggle("AutoBuyTicket", {
-    Title = "Auto Buy Ticket",
-    Default = false,
-    Flag = "AutoBuyTicket",
-    Callback = function(v)
-        Config.AutoBuyTicket = v
-    end
-})
-
-Tabs.Dungeon:AddDropdown("MoveMode", {
-    Title = "Movement Mode",
-    Values = { "Tween", "Teleport" },
-    Default = "Tween",
-    Flag = "MoveMode",
-    Callback = function(v)
-        Config.MoveMode = v
-    end
-})
-
-Tabs.Dungeon:AddToggle("AutoRebirth", {
-    Title = "Auto Rebirth (MAX)",
-    Description = "Faz rebirth automaticamente ao atingir level máximo",
-    Default = false,
-    Flag = "AutoRebirth",
-    Callback = function(v)
-        Config.AutoRebirth = v
-    end
-})
-
--- =====================================================
--- SETTINGS
--- =====================================================
-SaveManager:BuildConfigSection(Tabs.Settings)
-
--- =====================================================
--- NOTIFY INICIAL
--- =====================================================
-Fluent:Notify({
-    Title = "Allan Hub",
-    Content = "Parte 1 carregada com sucesso",
-    Duration = 5
-})
--- =====================================================
--- DUNGEON — ENEMIES (FIX: SEM .Position)
--- =====================================================
-local EnemiesFolder = workspace.__Main.__Enemies.Server
-
-local function GetClosestEnemy()
-local char = Player.Character
-local root = char and char:FindFirstChild("HumanoidRootPart")
-if not root then return nil end
-
-local pos = root.Position  
-local best, dist = nil, math.huge  
-
-for _, e in ipairs(EnemiesFolder:GetChildren()) do  
-    local hp = e:GetAttribute("HP")  
-    if hp and hp > 0 and e.Position then  
-        local d = (pos - e.Position).Magnitude  
-        if d < dist then  
-            dist = d  
-            best = e  
-        end  
-    end  
-end  
-
-return best
-
-end
-
-local function MoveToEnemy(enemy)
-local root = Player.Character.HumanoidRootPart
-if not root then return end
-
-if Config.MoveMode == "Teleport" then  
-    if currentTween then currentTween:Cancel() end  
-    root.CFrame = enemy.CFrame  
-else  
-    if currentTween then currentTween:Cancel() end  
-    currentTween = TweenService:Create(  
-        root,  
-        TweenInfo.new(0.3),  
-        { CFrame = enemy.CFrame }  
-    )  
-    currentTween:Play()  
-end
-
-end
 
 -- =====================================================
 -- RUNAS (5 SLOTS)
@@ -250,29 +223,41 @@ for i = 1, MAX_RUNE_SLOTS do RuneSlots[i] = "" end
 
 local ItemsInfo
 pcall(function()
-    ItemsInfo = require(
-        ReplicatedStorage:WaitForChild("Indexer"):WaitForChild("ItemsInfo")
-    )
+    ItemsInfo = require(ReplicatedStorage:WaitForChild("Indexer"):WaitForChild("ItemsInfo"))
 end)
 
 local AvailableRunes = {}
 
 local function ScanRunes()
     table.clear(AvailableRunes)
-    if not ItemsInfo then return end
+    if not ItemsInfo then 
+        warn("❌ ItemsInfo não encontrado!")
+        return 
+    end
+
+    print("🔍 Escaneando runas...")
+    local count = 0
 
     for id, data in pairs(ItemsInfo) do
         if typeof(data) == "table" then
             local t = tostring(data.Type or "")
             local n = tostring(data.Name or "")
-            if string.find(string.lower(t), "rune") or
-               string.find(string.lower(n), "rune") then
+            
+            if string.find(string.lower(t), "rune") or string.find(string.lower(n), "rune") then
                 table.insert(AvailableRunes, {
                     Id = id,
                     Name = data.Name or tostring(id)
                 })
+                count = count + 1
+                print("✅ Runa encontrada:", data.Name, "| ID:", id)
             end
         end
+    end
+
+    print("📊 Total de runas:", count)
+    
+    if count == 0 then
+        warn("⚠️ Nenhuma runa detectada!")
     end
 end
 
@@ -283,44 +268,179 @@ for _, r in ipairs(AvailableRunes) do
     table.insert(RuneNames, r.Name)
 end
 
+-- =====================================================
+-- UI DUNGEON
+-- =====================================================
+Tabs.Dungeon:AddToggle("AutoFarmDungeon", {
+    Title = "Auto Farm Dungeon",
+    Default = Settings.AutoFarm,
+    Flag = "AutoFarmDungeon",
+    Callback = function(v)
+        Settings.AutoFarm = v
+        SaveSettings()
+    end
+})
+
+Tabs.Dungeon:AddToggle("AutoBuyTicket", {
+    Title = "Auto Buy Ticket",
+    Default = Settings.AutoBuyTicket,
+    Flag = "AutoBuyTicket",
+    Callback = function(v)
+        Settings.AutoBuyTicket = v
+        SaveSettings()
+    end
+})
+
+Tabs.Dungeon:AddDropdown("MoveMode", {
+    Title = "Movement Mode",
+    Values = { "Tween", "Teleport" },
+    Default = Settings.MoveMode,
+    Flag = "MoveMode",
+    Callback = function(v)
+        Settings.MoveMode = v
+        SaveSettings()
+    end
+})
+
+Tabs.Dungeon:AddToggle("AutoRebirth", {
+    Title = "Auto Rebirth (MAX)",
+    Description = "Faz rebirth automaticamente ao atingir level máximo",
+    Default = Settings.AutoRebirth,
+    Flag = "AutoRebirth",
+    Callback = function(v)
+        Settings.AutoRebirth = v
+        SaveSettings()
+    end
+})
+
+-- =====================================================
+-- UI RUNAS
+-- =====================================================
 Tabs.Dungeon:AddParagraph({
-    Title = "🔮 Runas",
-    Content = "Selecione até 5 runas para a dungeon"
+    Title = "🔮 Sistema de Runas",
+    Content = "Runas detectadas: " .. #AvailableRunes .. "\nSelecione até 5 runas abaixo"
 })
 
 for slot = 1, MAX_RUNE_SLOTS do
     Tabs.Dungeon:AddDropdown("RuneSlot" .. slot, {
-        Title = "Runa Slot " .. slot,
+        Title = "🔮 Runa Slot " .. slot,
         Values = RuneNames,
-        Default = "Nenhuma",
+        Default = Settings["RuneSlot" .. slot],
         Flag = "RuneSlot" .. slot,
         Callback = function(v)
+            Settings["RuneSlot" .. slot] = v
+            
             if v == "Nenhuma" then
                 RuneSlots[slot] = ""
             else
                 for _, r in ipairs(AvailableRunes) do
                     if r.Name == v then
                         RuneSlots[slot] = r.Id
+                        print("✅ Slot " .. slot .. " configurado: " .. v .. " (ID: " .. r.Id .. ")")
                         break
                     end
                 end
             end
+            
+            SaveSettings()
         end
     })
 end
 
 Tabs.Dungeon:AddToggle("UseRunesAuto", {
-    Title = "Usar Runas Automaticamente",
-    Default = false,
+    Title = "🔮 Usar Runas Automaticamente",
+    Description = "Aplica as runas sempre que criar uma dungeon",
+    Default = Settings.UseRunesAuto,
     Flag = "UseRunesAuto",
     Callback = function(v)
-        Config.UseRunesAuto = v
+        Settings.UseRunesAuto = v
+        SaveSettings()
+        
+        if v then
+            local count = 0
+            for i = 1, MAX_RUNE_SLOTS do
+                if RuneSlots[i] ~= "" then count = count + 1 end
+            end
+            Fluent:Notify({
+                Title = "Runas Automáticas",
+                Content = "Ativado! " .. count .. " runas serão aplicadas",
+                Duration = 4
+            })
+        end
+    end
+})
+
+Tabs.Dungeon:AddButton({
+    Title = "🔄 Reescanear Runas",
+    Description = "Atualiza a lista de runas disponíveis",
+    Callback = function()
+        ScanRunes()
+        RuneNames = {"Nenhuma"}
+        for _, r in ipairs(AvailableRunes) do
+            table.insert(RuneNames, r.Name)
+        end
+        Fluent:Notify({
+            Title = "Runas",
+            Content = "Encontradas " .. #AvailableRunes .. " runas!",
+            Duration = 4
+        })
     end
 })
 
 -- =====================================================
--- DUNGEON ACTIONS
+-- DUNGEON FUNCTIONS
 -- =====================================================
+local EnemiesFolder = workspace.__Main.__Enemies.Server
+
+local function GetClosestEnemy()
+    local char = Player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+
+    local pos = root.Position
+    local best, dist = nil, math.huge
+
+    for _, e in ipairs(EnemiesFolder:GetChildren()) do
+        local hp = e:GetAttribute("HP")
+        if hp and hp > 0 and e.Position then
+            local d = (pos - e.Position).Magnitude
+            if d < dist then
+                dist = d
+                best = e
+            end
+        end
+    end
+
+    return best
+end
+
+local function MoveToEnemy(enemy)
+    local root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    if Settings.MoveMode == "Teleport" then
+        if currentTween then currentTween:Cancel() end
+        root.CFrame = enemy.CFrame
+    else
+        if currentTween then currentTween:Cancel() end
+        currentTween = TweenService:Create(
+            root,
+            TweenInfo.new(0.3),
+            { CFrame = enemy.CFrame }
+        )
+        currentTween:Play()
+    end
+end
+
+local function AttackEnemy(enemy)
+    SafeFire({
+        PetPos = {},
+        AttackType = "All",
+        Event = "Attack",
+        Enemy = enemy.Name
+    })
+end
+
 local function BuyDungeonTicket()
     SafeFire({
         Event = "DungeonAction",
@@ -338,7 +458,8 @@ local function ApplyRunes()
                 Slot = slot,
                 Item = runeId
             })
-            task.wait(0.15)
+            print("✅ Aplicando Runa Slot " .. slot .. ": " .. runeId)
+            task.wait(0.2)
         end
     end
 end
@@ -348,25 +469,51 @@ local function CreateDungeon()
 
     CreatingDungeon = true
     StartingDungeon = true
-    Status:SetDesc("Creating Dungeon")
+    Status:SetDesc("Preparing Dungeon...")
 
-    if Config.AutoBuyTicket then
+    -- Comprar ticket se ativado
+    if Settings.AutoBuyTicket then
         BuyDungeonTicket()
         task.wait(0.8)
     end
 
+    -- Aplicar runas se ativado (ANTES de criar)
+    if Settings.UseRunesAuto then
+        local runesApplied = 0
+        Status:SetDesc("Applying Runes...")
+        
+        for slot = 1, MAX_RUNE_SLOTS do
+            local runeId = RuneSlots[slot]
+            if runeId ~= "" then
+                SafeFire({
+                    Event = "DungeonAction",
+                    Action = "AddItem",
+                    Slot = slot,
+                    Item = runeId
+                })
+                runesApplied = runesApplied + 1
+                print("✅ Runa Slot " .. slot .. " aplicada: " .. runeId)
+                task.wait(0.2)
+            end
+        end
+        
+        if runesApplied > 0 then
+            Status:SetDesc("✨ " .. runesApplied .. " Runas Aplicadas!")
+            task.wait(0.5)
+        end
+    end
+
+    -- Criar dungeon (COM ou SEM runas dependendo do toggle)
+    Status:SetDesc(Settings.UseRunesAuto and "Creating Dungeon (Runas ON)" or "Creating Dungeon")
     SafeFire({
         Event = "DungeonAction",
         Action = "Create"
     })
 
-    task.wait(0.6)
+    task.wait(1.5)
 
-    if Config.UseRunesAuto then
-        ApplyRunes()
-        task.wait(0.3)
-    end
-
+    -- Iniciar dungeon
+    Status:SetDesc("Starting Dungeon...")
     SafeFire({
         Event = "DungeonAction",
         Action = "Start"
@@ -376,12 +523,11 @@ local function CreateDungeon()
         CreatingDungeon = false
     end)
 end
-
 -- =====================================================
--- AUTO DUNGEON LOOP (FIXADO)
+-- AUTO DUNGEON LOOP
 -- =====================================================
 RunService.Heartbeat:Connect(function(dt)
-    if not Config.AutoFarm or Rebirthing then
+    if not Settings.AutoFarm or Rebirthing then
         DungeonRunning = false
         SpawnConfirmTime = 0
         Status:SetDesc("Idle")
@@ -394,7 +540,7 @@ RunService.Heartbeat:Connect(function(dt)
         DungeonRunning = true
         StartingDungeon = false
         SpawnConfirmTime = 0
-        Status:SetDesc("Farming (" .. Config.MoveMode .. ")")
+        Status:SetDesc("Farming (" .. Settings.MoveMode .. ")")
         MoveToEnemy(enemy)
         AttackEnemy(enemy)
         return
@@ -413,26 +559,41 @@ RunService.Heartbeat:Connect(function(dt)
     end
 end)
 
-Fluent:Notify({
-    Title = "Dungeon",
-    Content = "Parte 2 carregada (Ataque + Runas OK)",
-    Duration = 5
-})
 -- =====================================================
--- CASTLE — VARIÁVEIS DE CONTROLE
+-- AUTO REBIRTH
+-- =====================================================
+local rebirthCooldown = 0
+
+RunService.Heartbeat:Connect(function(dt)
+    rebirthCooldown += dt
+
+    if not Settings.AutoRebirth or rebirthCooldown < 2 then return end
+    if Rebirthing or CreatingDungeon then return end
+
+    local leaderstats = Player:FindFirstChild("leaderstats")
+    local rebirths = leaderstats and leaderstats:FindFirstChild("Rebirths")
+
+    if rebirths then
+        SafeFire({
+            Event = "Rebirth"
+        })
+        rebirthCooldown = 0
+    end
+end)
+
+-- =====================================================
+-- CASTLE VARIABLES
 -- =====================================================
 local castleInfEnabled = false
 local autoCastleEnabled = false
 local castleCreateOnlyEnabled = false
-local castleSessionActive = false
-
-local entryFloor = Config.EntryFloor or 1
-local resetFloor = Config.ResetFloor or 100
-local selectedCastleSpeed = Config.CastleSpeed or "1"
-local castleSpeedEnabled = Config.CastleSpeedEnabled or false
+local entryFloor = Settings.EntryFloor
+local resetFloor = Settings.ResetFloor
+local selectedCastleSpeed = Settings.CastleSpeed
+local castleSpeedEnabled = Settings.CastleSpeedEnabled
 
 -- =====================================================
--- CASTLE — FUNÇÕES BASE
+-- CASTLE FUNCTIONS
 -- =====================================================
 local function getCurrentCastleFloor()
     local main = workspace:FindFirstChild("__Main")
@@ -441,7 +602,7 @@ local function getCurrentCastleFloor()
     if not world then return nil end
 
     local current = nil
-    for i = 1, 300 do
+    for i = 1, 800 do
         if world:FindFirstChild("Room_" .. i) then
             current = i
         end
@@ -474,9 +635,6 @@ local function joinCastle(floor)
     })
 end
 
--- =====================================================
--- CASTLE — PORTAL
--- =====================================================
 local function findFirePortal()
     local main = workspace:FindFirstChild("__Main")
     if not main then return nil end
@@ -524,10 +682,6 @@ local function activateFirePortal()
     return true
 end
 
--- =====================================================
--- CASTLE — FARM MOBS (FIX POSITION)
--- =====================================================
--- Farm mobs no castle
 local function farmCastleMobs()
     local mobsKilled = false
     local enemiesFolder = workspace:FindFirstChild("__Main")
@@ -545,24 +699,19 @@ local function farmCastleMobs()
 
             local hp = mob:GetAttribute("HP")
             if hp and hp > 0 and mob.Position then
-                if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
-                    -- Teleportar para o mob
-                    Player.Character.HumanoidRootPart.CFrame = mob.CFrame * CFrame.new(0, 0, 3)
+                local char = Player.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                
+                if hrp then
+                    hrp.CFrame = mob.CFrame * CFrame.new(0, 0, 3)
 
-                    -- Atacar o mob
-                    pcall(function()
-                        Remote:FireServer({
-                            {
-                                ["PetPos"] = {},
-                                ["AttackType"] = "All", 
-                                ["Event"] = "Attack",
-                                ["Enemy"] = mob.Name
-                            },
-                            "\7"
-                        })
-                    end)
+                    SafeFire({
+                        PetPos = {},
+                        AttackType = "All",
+                        Event = "Attack",
+                        Enemy = mob.Name
+                    })
 
-                    -- AGUARDAR O MOB MORRER ANTES DE IR PARA O PRÓXIMO
                     while castleInfEnabled and mob.Parent do
                         local currentHP = mob:GetAttribute("HP")
                         if not currentHP or currentHP <= 0 then
@@ -581,7 +730,7 @@ local function farmCastleMobs()
 end
 
 -- =====================================================
--- CASTLE — LOOPS
+-- CASTLE LOOPS
 -- =====================================================
 local function castleInfLoop()
     task.spawn(function()
@@ -644,62 +793,67 @@ local function castleCreateOnlyLoop()
 end
 
 -- =====================================================
--- CASTLE — UI
+-- CASTLE UI
 -- =====================================================
 Tabs.Castle:AddInput("EntryFloor", {
     Title = "Andar de Entrada",
-    Default = tostring(entryFloor),
+    Default = tostring(Settings.EntryFloor),
     Numeric = true,
     Finished = true,
     Callback = function(v)
         local n = tonumber(v)
         if n then
             entryFloor = n
-            Config.EntryFloor = n
+            Settings.EntryFloor = n
+            SaveSettings()
         end
     end
 })
 
 Tabs.Castle:AddInput("ResetFloor", {
     Title = "Andar de Reset",
-    Default = tostring(resetFloor),
+    Default = tostring(Settings.ResetFloor),
     Numeric = true,
     Finished = true,
     Callback = function(v)
         local n = tonumber(v)
         if n then
             resetFloor = n
-            Config.ResetFloor = n
+            Settings.ResetFloor = n
+            SaveSettings()
         end
     end
 })
 
 Tabs.Castle:AddToggle("CastleINF", {
     Title = "Castle INF (Farm + Portal)",
-    Default = false,
+    Default = Settings.CastleInf,
     Callback = function(v)
         castleInfEnabled = v
-        Config.CastleInf = v
+        Settings.CastleInf = v
+        SaveSettings()
         if v then castleInfLoop() end
     end
 })
 
 Tabs.Castle:AddToggle("AutoCastle", {
     Title = "Auto Castle (Create + Reset)",
-    Default = false,
+    Default = Settings.AutoCastle,
     Callback = function(v)
         autoCastleEnabled = v
-        Config.AutoCastle = v
+        Settings.AutoCastle = v
+        SaveSettings()
         if v then autoCastleLoop() end
     end
 })
 
 Tabs.Castle:AddToggle("CastleCreateOnly", {
     Title = "Auto Castle (Criar Apenas)",
-    Default = false,
+    Default = Settings.CastleCreateOnly,
     Callback = function(v)
         castleCreateOnlyEnabled = v
-        Config.CastleCreateOnly = v
+        Settings.CastleCreateOnly = v
+        SaveSettings()
         if v then castleCreateOnlyLoop() end
     end
 })
@@ -707,10 +861,12 @@ Tabs.Castle:AddToggle("CastleCreateOnly", {
 Tabs.Castle:AddDropdown("CastleSpeed", {
     Title = "Speed do Castelo",
     Values = {"1", "2", "4"},
-    Default = selectedCastleSpeed,
+    Default = Settings.CastleSpeed,
     Callback = function(v)
         selectedCastleSpeed = v
-        Config.CastleSpeed = v
+        Settings.CastleSpeed = v
+        SaveSettings()
+        
         if castleSpeedEnabled then
             SafeFire({
                 Event = "CastleAction",
@@ -723,10 +879,12 @@ Tabs.Castle:AddDropdown("CastleSpeed", {
 
 Tabs.Castle:AddToggle("EnableCastleSpeed", {
     Title = "Ativar Speed do Castelo",
-    Default = false,
+    Default = Settings.CastleSpeedEnabled,
     Callback = function(v)
         castleSpeedEnabled = v
-        Config.CastleSpeedEnabled = v
+        Settings.CastleSpeedEnabled = v
+        SaveSettings()
+        
         if v then
             SafeFire({
                 Event = "CastleAction",
@@ -737,13 +895,8 @@ Tabs.Castle:AddToggle("EnableCastleSpeed", {
     end
 })
 
-Fluent:Notify({
-    Title = "Castle",
-    Content = "Parte 3 carregada (Castle completo OK)",
-    Duration = 5
-})
 -- =====================================================
--- ISLANDS — DETECÇÃO REAL PELO WORKSPACE
+-- ISLANDS
 -- =====================================================
 local IslandsFolder = workspace:WaitForChild("__Main")
     :WaitForChild("__World")
@@ -786,10 +939,7 @@ local function TeleportToIsland(name)
     hrp.Velocity = Vector3.zero
 end
 
--- =====================================================
--- ISLANDS — UI
--- =====================================================
-Tabs.World:AddDropdown("IslandsTP", {
+Tabs.Islands:AddDropdown("IslandsTP", {
     Title = "Teleportar para Ilha",
     Values = IslandNames,
     Callback = function(v)
@@ -797,77 +947,106 @@ Tabs.World:AddDropdown("IslandsTP", {
     end
 })
 
-Tabs.World:AddButton({
+Tabs.Islands:AddButton({
     Title = "Atualizar Ilhas",
     Callback = function()
         ScanIslands()
         Fluent:Notify({
             Title = "Ilhas",
-            Content = "Lista de ilhas atualizada",
+            Content = "Lista atualizada!",
             Duration = 3
         })
     end
 })
 
 -- =====================================================
--- AUTO REBIRTH (SAFE)
+-- SETTINGS
 -- =====================================================
-local rebirthCooldown = 0
+SaveManager:BuildConfigSection(Tabs.Settings)
 
-RunService.Heartbeat:Connect(function(dt)
-    rebirthCooldown += dt
-
-    if not Config.AutoRebirth or rebirthCooldown < 2 then return end
-    if Rebirthing or CreatingDungeon then return end
-
-    local leaderstats = Player:FindFirstChild("leaderstats")
-    local rebirths = leaderstats and leaderstats:FindFirstChild("Rebirths")
-    local gems = leaderstats and leaderstats:FindFirstChild("Gems")
-
-    if rebirths and gems then
-        SafeFire({
-            Event = "Rebirth"
-        })
-        rebirthCooldown = 0
-    end
-end)
-
-Tabs.World:AddToggle("AutoRebirth", {
-    Title = "Auto Rebirth",
-    Default = false,
-    Callback = function(v)
-        Config.AutoRebirth = v
-    end
+Tabs.Settings:AddParagraph({
+    Title = "💾 Sistema de Salvamento",
+    Content = "Suas configurações são salvas automaticamente!"
 })
 
--- =====================================================
--- FINAL STATUS + CLEANUP
--- =====================================================
-Tabs.Misc:AddButton({
-    Title = "Resetar Status",
+Tabs.Settings:AddButton({
+    Title = "💾 Salvar Configurações",
+    Description = "Salva manualmente todas as configurações",
     Callback = function()
-        CreatingDungeon = false
-        DungeonRunning = false
-        Rebirthing = false
-        SpawnConfirmTime = 0
-        Status:SetDesc("Resetado")
+        SaveSettings()
+        Fluent:Notify({
+            Title = "Salvamento",
+            Content = "Configurações salvas com sucesso!",
+            Duration = 3
+        })
     end
 })
 
-Tabs.Misc:AddButton({
-    Title = "Reconectar",
+Tabs.Settings:AddButton({
+    Title = "🔄 Recarregar Configurações",
+    Description = "Recarrega as configurações do arquivo",
+    Callback = function()
+        LoadSettings()
+        Fluent:Notify({
+            Title = "Salvamento",
+            Content = "Configurações recarregadas!",
+            Duration = 3
+        })
+    end
+})
+
+Tabs.Settings:AddButton({
+    Title = "🗑️ Resetar Todas Configurações",
+    Description = "Volta para os valores padrão",
+    Callback = function()
+        if delfile and isfile(SETTINGS_FILE) then
+            delfile(SETTINGS_FILE)
+        end
+        
+        for key in pairs(Settings) do
+            if key:find("RuneSlot") then
+                Settings[key] = "Nenhuma"
+            elseif type(Settings[key]) == "boolean" then
+                Settings[key] = false
+            elseif key == "MoveMode" then
+                Settings[key] = "Tween"
+            elseif key == "CastleSpeed" then
+                Settings[key] = "1"
+            elseif key == "EntryFloor" then
+                Settings[key] = 1
+            elseif key == "ResetFloor" then
+                Settings[key] = 100
+            end
+        end
+        
+        SaveSettings()
+        
+        Fluent:Notify({
+            Title = "Resetado",
+            Content = "Configurações resetadas com sucesso!",
+            Duration = 3
+        })
+    end
+})
+
+Tabs.Settings:AddButton({
+    Title = "🔄 Reconectar Servidor",
+    Description = "Reconecta ao servidor atual",
     Callback = function()
         game:GetService("TeleportService"):Teleport(game.PlaceId, Player)
     end
 })
 
 -- =====================================================
--- SCRIPT FINALIZADO
+-- NOTIFICAÇÃO FINAL
 -- =====================================================
 Fluent:Notify({
-    Title = "Script Completo",
-    Content = "Dungeon + Castle + Ilhas + Rebirth carregados",
+    Title = "Allan Hub",
+    Content = "Script carregado com sucesso! 🎉",
     Duration = 6
 })
 
-print("✅ SCRIPT 100% CARREGADO E FUNCIONAL")
+print("✅ SCRIPT 100% CARREGADO")
+print("💾 Sistema de salvamento: ATIVO")
+print("🔮 Runas detectadas: " .. #AvailableRunes)
+print("⚙️ Todas as configurações serão salvas automaticamente!")
