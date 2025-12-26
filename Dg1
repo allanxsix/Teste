@@ -719,6 +719,35 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 -- =====================================================
+-- LEVEL CHECK (VERIFICAÇÃO DE LEVEL MÁXIMO)
+-- =====================================================
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local ExpText = PlayerGui
+    :WaitForChild("Hud")
+    :WaitForChild("BottomContainer")
+    :WaitForChild("ExpBar")
+    :WaitForChild("ExpText")
+
+local function GetLevelInfo()
+    local text = ExpText.Text
+    if not text then return nil, false end
+    local level = tonumber(string.match(text, "Level:%s*(%d+)"))
+    
+    -- Verifica se o texto contém "MAX" ou "MÁXIMO"
+    if string.find(text, "MAX") or string.find(text, "MÁXIMO") then
+        return level, true
+    end
+    
+    -- Verifica se a experiência necessária é 0 (level máximo)
+    local cur, need = string.match(text, "%((%d+)%/(%d+)%)")
+    if cur and need and tonumber(need) == 0 then
+        return level, true
+    end
+    
+    return level, false
+end
+
+-- =====================================================
 -- AUTO REBIRTH
 -- =====================================================
 local rebirthCooldown = 0
@@ -726,16 +755,22 @@ local rebirthCooldown = 0
 RunService.Heartbeat:Connect(function(dt)
     rebirthCooldown += dt
 
-    if not Settings.AutoRebirth or rebirthCooldown < 2 then return end
+    if not Settings.AutoRebirth or rebirthCooldown < 10 then return end
     if Rebirthing or CreatingDungeon then return end
 
-    local leaderstats = Player:FindFirstChild("leaderstats")
-    local rebirths = leaderstats and leaderstats:FindFirstChild("Rebirths")
-
-    if rebirths then
+    local lvl, isMax = GetLevelInfo()
+    
+    -- Só faz rebirth se estiver no level máximo
+    if isMax then
+        print("🌟 LEVEL MAX! Fazendo Rebirth...")
+        Rebirthing = true
+        
         SafeFire({
             Event = "Rebirth"
         })
+        
+        task.wait(2)
+        Rebirthing = false
         rebirthCooldown = 0
     end
 end)
