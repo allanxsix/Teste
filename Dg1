@@ -122,8 +122,36 @@ end
 local BridgeNet2 = require(ReplicatedStorage:WaitForChild("BridgeNet2"))
 local DungeonBridge = BridgeNet2.ReferenceBridge("GENERAL_EVENT")
 
+-- FUNÇÃO PARA PEGAR O ID DA DUNGEON ATIVA DO PLAYER
+local function GetPlayerDungeonId()
+    local infos = ReplicatedStorage:FindFirstChild("__Infos")
+    if not infos then return nil end
+    
+    local dungeons = infos:FindFirstChild("__Dungeons")
+    if not dungeons then return nil end
+    
+    -- Procurar dungeon onde o player é o líder
+    for _, dungeon in ipairs(dungeons:GetChildren()) do
+        local leader = dungeon:GetAttribute("Leader")
+        if leader == Player.UserId then
+            return leader -- O ID da dungeon é o UserId do líder
+        end
+    end
+    
+    return nil
+end
+
 local function SafeFire(payload)
     if not DungeonBridge then return end
+    
+    -- SE FOR AÇÃO DE DUNGEON, ADICIONAR O ID DA DUNGEON AUTOMATICAMENTE
+    if payload.Event == "DungeonAction" and payload.Action ~= "Create" and payload.Action ~= "BuyTicket" then
+        local dungeonId = GetPlayerDungeonId()
+        if dungeonId then
+            payload.Dungeon = dungeonId
+        end
+    end
+    
     local ok, err = pcall(function()
         DungeonBridge:Fire(payload)
     end)
@@ -139,7 +167,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Allan Hub",
+    Title = "Allan Hub V2",
     SubTitle = "Dungeon + Castle + Runes + Save System",
     TabWidth = 160,
     Size = UDim2.fromOffset(560, 440),
@@ -249,7 +277,6 @@ local function ScanRunes()
                     Name = data.Name or tostring(id)
                 })
                 count = count + 1
-                print("✅ Runa encontrada:", data.Name, "| ID:", id)
             end
         end
     end
@@ -448,20 +475,41 @@ local function BuyDungeonTicket()
     })
 end
 
+-- NOVA FUNÇÃO APPLY RUNES COM DETECÇÃO DE ID
 local function ApplyRunes()
+    if not Settings.UseRunesAuto then 
+        return 0 
+    end
+    
+    -- PEGAR ID DA DUNGEON
+    local dungeonId = GetPlayerDungeonId()
+    if not dungeonId then
+        print("❌ ID da dungeon não encontrado - não é possível adicionar runas")
+        return 0
+    end
+    
+    print("🔑 ID da Dungeon detectado:", dungeonId)
+    
+    local runesApplied = 0
+    
     for slot = 1, MAX_RUNE_SLOTS do
         local runeId = RuneSlots[slot]
         if runeId ~= "" then
+            -- USAR MÉTODO QUE FUNCIONA: AddItems com ID da Dungeon
             SafeFire({
+                Dungeon = dungeonId,
                 Event = "DungeonAction",
-                Action = "AddItem",
+                Action = "AddItems",
                 Slot = slot,
                 Item = runeId
             })
+            runesApplied = runesApplied + 1
             print("✅ Aplicando Runa Slot " .. slot .. ": " .. runeId)
-            task.wait(0.2)
+            task.wait(0.4)
         end
     end
+    
+    return runesApplied
 end
 
 local function CreateDungeon()
@@ -477,40 +525,25 @@ local function CreateDungeon()
         task.wait(0.8)
     end
 
-    -- Aplicar runas ANTES de criar
+    -- Criar dungeon PRIMEIRO
+    Status:SetDesc("Creating Dungeon...")
+    SafeFire({
+        Event = "DungeonAction",
+        Action = "Create"
+    })
+    
+    task.wait(1.5)
+
+    -- Aplicar runas DEPOIS de criar (com ID detectado)
     if Settings.UseRunesAuto then
-        local runesApplied = 0
         Status:SetDesc("Applying Runes...")
-        
-        for slot = 1, MAX_RUNE_SLOTS do
-            local runeId = RuneSlots[slot]
-            if runeId ~= "" then
-                SafeFire({
-                    Event = "DungeonAction",
-                    Action = "AddItem",
-                    Slot = slot,
-                    Item = runeId
-                })
-                runesApplied = runesApplied + 1
-                print("✅ Aplicando Runa Slot " .. slot .. ": " .. runeId)
-                task.wait(0.2)
-            end
-        end
+        local runesApplied = ApplyRunes()
         
         if runesApplied > 0 then
             Status:SetDesc("✨ " .. runesApplied .. " Runas Ready!")
             task.wait(0.5)
         end
     end
-
-    -- Criar dungeon
-    Status:SetDesc("Creating Dungeon...")
-    SafeFire({
-        Event = "DungeonAction",
-        Action = "Create"
-    })
-
-    task.wait(1.5)
 
     -- Iniciar dungeon
     Status:SetDesc("Starting Dungeon...")
@@ -1042,12 +1075,13 @@ Tabs.Settings:AddButton({
 -- NOTIFICAÇÃO FINAL
 -- =====================================================
 Fluent:Notify({
-    Title = "Allan Hub",
+    Title = "Allan Hub V2",
     Content = "Script carregado com sucesso! 🎉",
     Duration = 6
 })
 
-print("✅ SCRIPT 100% CARREGADO")
+print("✅ ALLAN HUB V2 CARREGADO")
 print("💾 Sistema de salvamento: ATIVO")
 print("🔮 Runas detectadas: " .. #AvailableRunes)
+print("🔑 Detecção automática de ID da dungeon: ATIVO")
 print("⚙️ Todas as configurações serão salvas automaticamente!")
