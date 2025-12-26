@@ -1057,17 +1057,34 @@ Tabs.Castle:AddToggle("EnableCastleSpeed", {
 -- =====================================================
 -- ISLANDS
 -- =====================================================
-local IslandsFolder = workspace:WaitForChild("__Main")
-    :WaitForChild("__World")
-    :WaitForChild("__Extra")
-    :WaitForChild("__Spawns")
-
 local Islands = {}
-local IslandNames = {}
+local IslandNames = {"Carregando..."}
+
+local function GetIslandsFolder()
+    local main = workspace:FindFirstChild("__Main")
+    if not main then return nil end
+    
+    local world = main:FindFirstChild("__World")
+    if not world then return nil end
+    
+    local extra = world:FindFirstChild("__Extra")
+    if not extra then return nil end
+    
+    local spawns = extra:FindFirstChild("__Spawns")
+    return spawns
+end
 
 local function ScanIslands()
     table.clear(Islands)
     table.clear(IslandNames)
+
+    local IslandsFolder = GetIslandsFolder()
+    
+    if not IslandsFolder then
+        print("⚠️ Pasta de ilhas não encontrada!")
+        table.insert(IslandNames, "Ilhas não disponíveis")
+        return
+    end
 
     for _, island in ipairs(IslandsFolder:GetChildren()) do
         if island:IsA("BasePart") or island:IsA("Model") then
@@ -1076,16 +1093,26 @@ local function ScanIslands()
             table.insert(IslandNames, name)
         end
     end
+    
+    if #IslandNames == 0 then
+        table.insert(IslandNames, "Nenhuma ilha encontrada")
+    end
+    
+    print("🏝️ Total de ilhas encontradas:", #IslandNames)
 end
-
-ScanIslands()
 
 local function TeleportToIsland(name)
     local island = Islands[name]
-    if not island then return end
+    if not island then 
+        print("⚠️ Ilha não encontrada:", name)
+        return 
+    end
 
     local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+    if not hrp then 
+        print("⚠️ HumanoidRootPart não encontrado!")
+        return 
+    end
 
     local cf
     if island:IsA("Model") then
@@ -1096,23 +1123,34 @@ local function TeleportToIsland(name)
 
     hrp.CFrame = cf * CFrame.new(0, 6, 0)
     hrp.Velocity = Vector3.zero
+    
+    print("✅ Teleportado para:", name)
 end
+
+-- Escanear ilhas após um delay para garantir que tudo carregou
+task.spawn(function()
+    task.wait(2)
+    ScanIslands()
+end)
 
 Tabs.Islands:AddDropdown("IslandsTP", {
     Title = "Teleportar para Ilha",
     Values = IslandNames,
     Callback = function(v)
-        TeleportToIsland(v)
+        if v ~= "Carregando..." and v ~= "Ilhas não disponíveis" and v ~= "Nenhuma ilha encontrada" then
+            TeleportToIsland(v)
+        end
     end
 })
 
 Tabs.Islands:AddButton({
-    Title = "Atualizar Ilhas",
+    Title = "🔄 Atualizar Lista de Ilhas",
+    Description = "Reescaneia todas as ilhas disponíveis",
     Callback = function()
         ScanIslands()
         Fluent:Notify({
             Title = "Ilhas",
-            Content = "Lista atualizada!",
+            Content = "Encontradas " .. #IslandNames .. " ilhas!",
             Duration = 3
         })
     end
