@@ -1057,104 +1057,87 @@ Tabs.Castle:AddToggle("EnableCastleSpeed", {
 -- =====================================================
 -- ISLANDS
 -- =====================================================
-local Islands = {}
-local IslandNames = {"Carregando..."}
-
-local function GetIslandsFolder()
-    local main = workspace:FindFirstChild("__Main")
-    if not main then return nil end
-    
-    local world = main:FindFirstChild("__World")
-    if not world then return nil end
-    
-    local extra = world:FindFirstChild("__Extra")
-    if not extra then return nil end
-    
-    local spawns = extra:FindFirstChild("__Spawns")
-    return spawns
+local SelectedIslandName = nil
+local IslandMap = {}
+local function GetWorld()
+local extra = workspace:FindFirstChild("__Extra")
+if not extra then return nil end
+return extra:FindFirstChild("__Spawns")
 end
-
+local function GetIslandDisplayName(island)
+if island:GetAttribute("DisplayName") then return island:GetAttribute("DisplayName") end
+if island:GetAttribute("Name") then return island:GetAttribute("Name") end
+for _, child in ipairs(island:GetChildren()) do
+if child:IsA("StringValue") then
+return child.Value
+end
+end
+return island.Name
+end
 local function ScanIslands()
-    table.clear(Islands)
-    table.clear(IslandNames)
-
-    local IslandsFolder = GetIslandsFolder()
-    
-    if not IslandsFolder then
-        print("⚠️ Pasta de ilhas não encontrada!")
-        table.insert(IslandNames, "Ilhas não disponíveis")
-        return
-    end
-
-    for _, island in ipairs(IslandsFolder:GetChildren()) do
-        if island:IsA("BasePart") or island:IsA("Model") then
-            local name = island.Name
-            Islands[name] = island
-            table.insert(IslandNames, name)
-        end
-    end
-    
-    if #IslandNames == 0 then
-        table.insert(IslandNames, "Nenhuma ilha encontrada")
-    end
-    
-    print("🏝️ Total de ilhas encontradas:", #IslandNames)
+table.clear(IslandMap)
+local World = GetWorld()
+if not World then return {} end
+local list = {}
+for _, island in ipairs(World:GetChildren()) do
+local displayName = GetIslandDisplayName(island)
+IslandMap[displayName] = island
+table.insert(list, displayName)
 end
-
-local function TeleportToIsland(name)
-    local island = Islands[name]
-    if not island then 
-        print("⚠️ Ilha não encontrada:", name)
-        return 
-    end
-
-    local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then 
-        print("⚠️ HumanoidRootPart não encontrado!")
-        return 
-    end
-
-    local cf
-    if island:IsA("Model") then
-        cf = island:GetPivot()
-    else
-        cf = island.CFrame
-    end
-
-    hrp.CFrame = cf * CFrame.new(0, 6, 0)
-    hrp.Velocity = Vector3.zero
-    
-    print("✅ Teleportado para:", name)
+table.sort(list)
+return list
 end
-
--- Escanear ilhas após um delay para garantir que tudo carregou
-task.spawn(function()
-    task.wait(2)
-    ScanIslands()
-end)
-
-Tabs.Islands:AddDropdown("IslandsTP", {
-    Title = "Teleportar para Ilha",
-    Values = IslandNames,
-    Callback = function(v)
-        if v ~= "Carregando..." and v ~= "Ilhas não disponíveis" and v ~= "Nenhuma ilha encontrada" then
-            TeleportToIsland(v)
-        end
-    end
+local function TeleportToIsland(islandModel)
+local char = Players.LocalPlayer.Character
+if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+local hrp = char.HumanoidRootPart
+if islandModel.GetPivot then
+hrp.CFrame = islandModel:GetPivot() * CFrame.new(0, 10, 0)
+elseif islandModel.PrimaryPart then
+hrp.CFrame = islandModel.PrimaryPart.CFrame * CFrame.new(0, 10, 0)
+elseif islandModel:IsA("BasePart") then
+hrp.CFrame = islandModel.CFrame * CFrame.new(0, 10, 0)
+end
+end
+local IslandDropdown = Tabs.Islands:AddDropdown("IslandDropdown", {
+Title = "Ilhas Detectadas",
+Values = ScanIslands(),
+Multi = false,
+Callback = function(value)
+SelectedIslandName = value
+end
 })
-
 Tabs.Islands:AddButton({
-    Title = "🔄 Atualizar Lista de Ilhas",
-    Description = "Reescaneia todas as ilhas disponíveis",
-    Callback = function()
-        ScanIslands()
-        Fluent:Notify({
-            Title = "Ilhas",
-            Content = "Encontradas " .. #IslandNames .. " ilhas!",
-            Duration = 3
-        })
-    end
+Title = "Teleportar Ilha Selecionada",
+Description = "Vai para a ilha escolhida no dropdown",
+Callback = function()
+if not SelectedIslandName then
+Fluent:Notify({
+Title = "Erro",
+Content = "Nenhuma ilha selecionada",
+Duration = 3
 })
+return
+end
+local islandModel = IslandMap[SelectedIslandName]
+if islandModel then
+TeleportToIsland(islandModel)
+Fluent:Notify({
+Title = "Teleport",
+Content = "Você foi para " .. SelectedIslandName,
+Duration = 3
+})
+end
+end
+})
+-- Atualização automática do dropdown
+task.spawn(function()
+while task.wait(6) do
+if IslandDropdown then
+IslandDropdown:SetValues(ScanIslands())
+end
+end
+end)
 
 -- =====================================================
 -- SETTINGS
