@@ -20,6 +20,7 @@ local Player = Players.LocalPlayer
 -- SISTEMA DE SALVAMENTO JSON
 -- =====================================================
 local SETTINGS_FILE = "AllanHub_Settings.json"
+local DUNGEON_RUNES_FILE = "AllanHub_DungeonRunes.json"
 
 local Settings = {
     -- Dungeon
@@ -94,6 +95,78 @@ local function LoadSettings()
 end
 
 LoadSettings()
+
+-- =====================================================
+-- SISTEMA DE RUNAS DA DUNGEON (PERSISTENTE)
+-- =====================================================
+local function SaveDungeonRunes()
+    if not writefile then return end
+    
+    local activerunes = {}
+    for slot = 1, 5 do
+        local runeName = Settings["RuneSlot" .. slot]
+        if runeName and runeName ~= "Nenhuma" then
+            activerunes["Slot" .. slot] = runeName
+        end
+    end
+    
+    local success, err = pcall(function()
+        local encoded = HttpService:JSONEncode(activerunes)
+        writefile(DUNGEON_RUNES_FILE, encoded)
+        print("✅ Runas da dungeon salvas no arquivo persistente!")
+    end)
+    
+    if not success then
+        warn("❌ Erro ao salvar runas da dungeon:", err)
+    end
+end
+
+local function LoadDungeonRunes()
+    if not readfile or not isfile then return false end
+    
+    if not isfile(DUNGEON_RUNES_FILE) then
+        print("📁 Nenhum arquivo de runas da dungeon encontrado")
+        return false
+    end
+    
+    local success, err = pcall(function()
+        local data = readfile(DUNGEON_RUNES_FILE)
+        local decoded = HttpService:JSONDecode(data)
+        
+        print("🔮 Carregando runas salvas da dungeon...")
+        
+        for slotKey, runeName in pairs(decoded) do
+            local slotNum = tonumber(string.match(slotKey, "Slot(%d+)"))
+            if slotNum then
+                Settings["RuneSlot" .. slotNum] = runeName
+                print("  ✅ Slot " .. slotNum .. ": " .. runeName)
+            end
+        end
+        
+        print("✅ Runas da dungeon carregadas com sucesso!")
+    end)
+    
+    if not success then
+        warn("❌ Erro ao carregar runas da dungeon:", err)
+        return false
+    end
+    
+    return true
+end
+
+local function ClearDungeonRunes()
+    if not delfile or not isfile then return end
+    
+    if isfile(DUNGEON_RUNES_FILE) then
+        delfile(DUNGEON_RUNES_FILE)
+        print("🗑️ Arquivo de runas da dungeon limpo!")
+    end
+end
+
+-- CARREGAR RUNAS DA DUNGEON SE EXISTIR (PRIORIDADE MÁXIMA)
+if LoadDungeonRunes() then
+    print("🔄 Runas da dungeon restauradas do arquivo persistente!")
+end
 
 -- =====================================================
 -- CONFIG (USA SETTINGS)
@@ -295,6 +368,36 @@ for _, r in ipairs(AvailableRunes) do
     table.insert(RuneNames, r.Name)
 end
 
+-- RESTAURAR RUNAS SALVAS DOS SETTINGS
+local function RestoreSavedRunes()
+    local restoredCount = 0
+    
+    for slot = 1, MAX_RUNE_SLOTS do
+        local savedRuneName = Settings["RuneSlot" .. slot]
+        
+        if savedRuneName and savedRuneName ~= "Nenhuma" then
+            -- Procurar o ID da runa pelo nome salvo
+            for _, rune in ipairs(AvailableRunes) do
+                if rune.Name == savedRuneName then
+                    RuneSlots[slot] = rune.Id
+                    restoredCount = restoredCount + 1
+                    print("✅ Runa Slot " .. slot .. " restaurada: " .. savedRuneName .. " (ID: " .. rune.Id .. ")")
+                    break
+                end
+            end
+        end
+    end
+    
+    if restoredCount > 0 then
+        print("🔮 Total de " .. restoredCount .. " runas restauradas das configurações salvas!")
+    end
+    
+    return restoredCount
+end
+
+-- RESTAURAR AS RUNAS APÓS ESCANEAR (agora usa as runas do arquivo persistente)
+RestoreSavedRunes()
+
 -- =====================================================
 -- UI DUNGEON
 -- =====================================================
@@ -370,6 +473,11 @@ for slot = 1, MAX_RUNE_SLOTS do
             end
             
             SaveSettings()
+            
+            -- SALVAR NO ARQUIVO PERSISTENTE DE RUNAS DA DUNGEON
+            if Settings.UseRunesAuto then
+                SaveDungeonRunes()
+            end
         end
     })
 end
@@ -384,6 +492,9 @@ Tabs.Dungeon:AddToggle("UseRunesAuto", {
         SaveSettings()
         
         if v then
+            -- SALVAR RUNAS NO ARQUIVO PERSISTENTE AO ATIVAR
+            SaveDungeonRunes()
+            
             local count = 0
             for i = 1, MAX_RUNE_SLOTS do
                 if RuneSlots[i] ~= "" then count = count + 1 end
@@ -391,6 +502,14 @@ Tabs.Dungeon:AddToggle("UseRunesAuto", {
             Fluent:Notify({
                 Title = "Runas Automáticas",
                 Content = "Ativado! " .. count .. " runas serão aplicadas",
+                Duration = 4
+            })
+        else
+            -- LIMPAR ARQUIVO PERSISTENTE AO DESATIVAR
+            ClearDungeonRunes()
+            Fluent:Notify({
+                Title = "Runas Automáticas",
+                Content = "Desativado! Arquivo de runas limpo.",
                 Duration = 4
             })
         end
@@ -518,6 +637,12 @@ local function CreateDungeon()
     CreatingDungeon = true
     StartingDungeon = true
     Status:SetDesc("Preparing Dungeon...")
+
+    -- SALVAR RUNAS ANTES DE CRIAR A DUNGEON (caso o jogo recarregue)
+    if Settings.UseRunesAuto then
+        SaveDungeonRunes()
+        print("💾 Runas salvas antes de criar a dungeon")
+    end
 
     -- Comprar ticket
     if Settings.AutoBuyTicket then
