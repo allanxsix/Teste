@@ -49,7 +49,8 @@ local Settings = {
     -- Shop
     AutoBuyRunes = false,
     AutoBuyLevelSkip1 = false,
-    AutoBuyLevelSkip10 = false
+    AutoBuyLevelSkip10 = false,
+    SelectedShopRunes = {}
 }
 
 local function SaveSettings()
@@ -1237,14 +1238,21 @@ if shopData and shopData.Items then
     
     Tabs.Shop:AddSection("Seleção de Runas")
     
+    -- Carregar runas selecionadas salvas
+    if Settings.SelectedShopRunes and type(Settings.SelectedShopRunes) == "table" then
+        selectedRunesToBuy = Settings.SelectedShopRunes
+    end
+    
     -- Dropdown Runas
     Tabs.Shop:AddDropdown("RuneShopItems", {
         Title = "🔮 Selecionar Runas",
         Values = runeItems,
         Multi = true,
-        Default = {},
+        Default = Settings.SelectedShopRunes or {},
         Callback = function(Value)
             selectedRunesToBuy = Value
+            Settings.SelectedShopRunes = Value
+            SaveSettings()
         end
     })
     
@@ -1285,12 +1293,6 @@ if shopData and shopData.Items then
         Callback = function(Value)
             Settings.AutoBuyRunes = Value
             SaveSettings()
-            
-            Fluent:Notify({
-                Title = "Auto Compra",
-                Content = Value and "✅ Ativado!" or "❌ Desativado!",
-                Duration = 3
-            })
         end
     })
     
@@ -1342,12 +1344,6 @@ if shopData and shopData.Items then
         Callback = function(Value)
             Settings.AutoBuyLevelSkip1 = Value
             SaveSettings()
-            
-            Fluent:Notify({
-                Title = "Auto +1 Nível",
-                Content = Value and "✅ Ativado!" or "❌ Desativado!",
-                Duration = 3
-            })
         end
     })
     
@@ -1359,12 +1355,6 @@ if shopData and shopData.Items then
         Callback = function(Value)
             Settings.AutoBuyLevelSkip10 = Value
             SaveSettings()
-            
-            Fluent:Notify({
-                Title = "Auto +10 Níveis",
-                Content = Value and "✅ Ativado!" or "❌ Desativado!",
-                Duration = 3
-            })
         end
     })
     
