@@ -44,7 +44,12 @@ local Settings = {
     CastleSpeed = "1",
     CastleSpeedEnabled = false,
     EntryFloor = 1,
-    ResetFloor = 100
+    ResetFloor = 100,
+    
+    -- Shop
+    AutoBuyRunes = false,
+    AutoBuyLevelSkip1 = false,
+    AutoBuyLevelSkip10 = false
 }
 
 local function SaveSettings()
@@ -259,6 +264,7 @@ local Tabs = {
     Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "swords" }),
     Castle  = Window:AddTab({ Title = "Castelo Infernal", Icon = "flame" }),
     Islands = Window:AddTab({ Title = "Islands", Icon = "map" }),
+    Shop    = Window:AddTab({ Title = "Shop", Icon = "shopping-bag" }),
     Settings= Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -719,6 +725,35 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 -- =====================================================
+-- LEVEL CHECK (VERIFICAÇÃO DE LEVEL MÁXIMO)
+-- =====================================================
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local ExpText = PlayerGui
+    :WaitForChild("Hud")
+    :WaitForChild("BottomContainer")
+    :WaitForChild("ExpBar")
+    :WaitForChild("ExpText")
+
+local function GetLevelInfo()
+    local text = ExpText.Text
+    if not text then return nil, false end
+    local level = tonumber(string.match(text, "Level:%s*(%d+)"))
+    
+    -- Verifica se o texto contém "MAX" ou "MÁXIMO"
+    if string.find(text, "MAX") or string.find(text, "MÁXIMO") then
+        return level, true
+    end
+    
+    -- Verifica se a experiência necessária é 0 (level máximo)
+    local cur, need = string.match(text, "%((%d+)%/(%d+)%)")
+    if cur and need and tonumber(need) == 0 then
+        return level, true
+    end
+    
+    return level, false
+end
+
+-- =====================================================
 -- AUTO REBIRTH
 -- =====================================================
 local rebirthCooldown = 0
@@ -726,16 +761,22 @@ local rebirthCooldown = 0
 RunService.Heartbeat:Connect(function(dt)
     rebirthCooldown += dt
 
-    if not Settings.AutoRebirth or rebirthCooldown < 2 then return end
+    if not Settings.AutoRebirth or rebirthCooldown < 10 then return end
     if Rebirthing or CreatingDungeon then return end
 
-    local leaderstats = Player:FindFirstChild("leaderstats")
-    local rebirths = leaderstats and leaderstats:FindFirstChild("Rebirths")
-
-    if rebirths then
+    local lvl, isMax = GetLevelInfo()
+    
+    -- Só faz rebirth se estiver no level máximo
+    if isMax then
+        print("🌟 LEVEL MAX! Fazendo Rebirth...")
+        Rebirthing = true
+        
         SafeFire({
             Event = "Rebirth"
         })
+        
+        task.wait(2)
+        Rebirthing = false
         rebirthCooldown = 0
     end
 end)
@@ -1138,6 +1179,251 @@ IslandDropdown:SetValues(ScanIslands())
 end
 end
 end)
+
+-- =====================================================
+-- SHOP - RUNE AUTO BUY
+-- =====================================================
+local ShopInfo = require(ReplicatedStorage.Indexer.ShopInfo)
+
+-- Ticket System (background)
+local leaderstats = Player:WaitForChild("leaderstats")
+local inventory = leaderstats:WaitForChild("Inventory")
+local items = inventory:WaitForChild("Items")
+local ticket = items:WaitForChild("Ticket")
+
+local function GetTicketAmount()
+    return ticket:GetAttribute("Amount") or 0
+end
+
+-- Safe Fire Server
+local function SafeFireShop(...)
+    local args = {...}
+    
+    local success, err = pcall(function()
+        ReplicatedStorage.BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
+    end)
+    
+    if not success then
+        warn("[Shop] Erro ao enviar dados:", err)
+    end
+    
+    return success
+end
+
+-- Shop Data
+local shopData = ShopInfo.RuneShop
+local selectedRunesToBuy = {}
+
+if shopData and shopData.Items then
+    local runeItems = {}
+    for itemName in pairs(shopData.Items) do
+        table.insert(runeItems, itemName)
+    end
+    table.sort(runeItems)
+    
+    -- Tickets Display
+    local ticketInfo = Tabs.Shop:AddParagraph({
+        Title = "🎫 Tickets Disponíveis",
+        Content = "Carregando..."
+    })
+    
+    task.spawn(function()
+        while true do
+            local amount = GetTicketAmount()
+            ticketInfo:SetDesc(string.format("💰 Você tem: %s tickets", amount))
+            task.wait(1)
+        end
+    end)
+    
+    Tabs.Shop:AddSection("Seleção de Runas")
+    
+    -- Dropdown Runas
+    Tabs.Shop:AddDropdown("RuneShopItems", {
+        Title = "🔮 Selecionar Runas",
+        Values = runeItems,
+        Multi = true,
+        Default = {},
+        Callback = function(Value)
+            selectedRunesToBuy = Value
+        end
+    })
+    
+    -- Info Runas Selecionadas
+    local runeInfo = Tabs.Shop:AddParagraph({
+        Title = "Runas Selecionadas",
+        Content = "Nenhuma runa selecionada."
+    })
+    
+    task.spawn(function()
+        while true do
+            local text = ""
+            for itemName, enabled in pairs(selectedRunesToBuy) do
+                if enabled then
+                    local item = shopData.Items[itemName]
+                    local price = item.Price or "?"
+                    local priceType = item.PriceType or ""
+                    text = text .. string.format(
+                        "💎 %s - 💰 %s %s\n",
+                        itemName,
+                        price,
+                        priceType
+                    )
+                end
+            end
+            runeInfo:SetDesc(text ~= "" and text or "Nenhuma runa selecionada.")
+            task.wait(0.5)
+        end
+    end)
+    
+    Tabs.Shop:AddSection("Compra")
+    
+    -- Toggle Auto Compra
+    Tabs.Shop:AddToggle("AutoBuyRunes", {
+        Title = "🔄 Auto Compra de Runas",
+        Description = "Compra automaticamente quando tiver tickets suficientes",
+        Default = Settings.AutoBuyRunes,
+        Callback = function(Value)
+            Settings.AutoBuyRunes = Value
+            SaveSettings()
+            
+            Fluent:Notify({
+                Title = "Auto Compra",
+                Content = Value and "✅ Ativado!" or "❌ Desativado!",
+                Duration = 3
+            })
+        end
+    })
+    
+    -- Loop Auto Compra (background)
+    task.spawn(function()
+        while true do
+            if Settings.AutoBuyRunes then
+                local tickets = GetTicketAmount()
+                
+                for itemName, enabled in pairs(selectedRunesToBuy) do
+                    if enabled then
+                        local item = shopData.Items[itemName]
+                        local price = item.Price or 0
+                        
+                        if tickets >= price then
+                            SafeFireShop(
+                                {
+                                    {
+                                        ["Shop"] = "RuneShop",
+                                        ["Action"] = "Buy",
+                                        ["Amount"] = 1,
+                                        ["Item"] = itemName,
+                                        ["Event"] = "ItemShopAction",
+                                        ["Rank"] = 1
+                                    },
+                                    "\4"
+                                }
+                            )
+                            task.wait(0.3)
+                            tickets = GetTicketAmount()
+                        end
+                    end
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+    
+    -- =====================================================
+    -- LEVEL SKIP SYSTEM
+    -- =====================================================
+    Tabs.Shop:AddSection("Level Skip")
+    
+    -- Toggle Auto Compra +1 Nível
+    Tabs.Shop:AddToggle("AutoBuyLevelSkip1", {
+        Title = "🔄 Auto Compra +1 Nível",
+        Description = "Compra automaticamente quando tiver 99+ tickets",
+        Default = Settings.AutoBuyLevelSkip1,
+        Callback = function(Value)
+            Settings.AutoBuyLevelSkip1 = Value
+            SaveSettings()
+            
+            Fluent:Notify({
+                Title = "Auto +1 Nível",
+                Content = Value and "✅ Ativado!" or "❌ Desativado!",
+                Duration = 3
+            })
+        end
+    })
+    
+    -- Toggle Auto Compra +10 Níveis
+    Tabs.Shop:AddToggle("AutoBuyLevelSkip10", {
+        Title = "🔄 Auto Compra +10 Níveis",
+        Description = "Compra automaticamente quando tiver 999+ tickets",
+        Default = Settings.AutoBuyLevelSkip10,
+        Callback = function(Value)
+            Settings.AutoBuyLevelSkip10 = Value
+            SaveSettings()
+            
+            Fluent:Notify({
+                Title = "Auto +10 Níveis",
+                Content = Value and "✅ Ativado!" or "❌ Desativado!",
+                Duration = 3
+            })
+        end
+    })
+    
+    -- Loop Auto Compra +1 Nível (background)
+    task.spawn(function()
+        while true do
+            if Settings.AutoBuyLevelSkip1 then
+                local tickets = GetTicketAmount()
+                
+                if tickets >= 99 then
+                    SafeFireShop(
+                        {
+                            {
+                                ["SubType"] = "Products",
+                                ["Type"] = "Product",
+                                ["Event"] = "TicketShop",
+                                ["Name"] = "Skip1Level"
+                            },
+                            "\4"
+                        }
+                    )
+                    task.wait(0.5)
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+    
+    -- Loop Auto Compra +10 Níveis (background)
+    task.spawn(function()
+        while true do
+            if Settings.AutoBuyLevelSkip10 then
+                local tickets = GetTicketAmount()
+                
+                if tickets >= 999 then
+                    SafeFireShop(
+                        {
+                            {
+                                ["SubType"] = "Products",
+                                ["Type"] = "Product",
+                                ["Event"] = "TicketShop",
+                                ["Name"] = "Skip2Level"
+                            },
+                            "\4"
+                        }
+                    )
+                    task.wait(0.5)
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+else
+    Tabs.Shop:AddParagraph({
+        Title = "❌ Erro",
+        Content = "Rune Shop não encontrada no ShopInfo"
+    })
+end
+
 -- =====================================================
 -- SETTINGS
 -- =====================================================
