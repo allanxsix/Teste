@@ -246,8 +246,8 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Allan Hub V2",
-    SubTitle = "Dungeon + Castle + Runes + Save System",
+    Title = "Allan Hub",
+    SubTitle = "By Allan",
     TabWidth = 160,
     Size = UDim2.fromOffset(560, 440),
     Acrylic = true,
@@ -1334,11 +1334,11 @@ if shopData and shopData.Items then
     -- =====================================================
     -- LEVEL SKIP SYSTEM
     -- =====================================================
-    Tabs.Shop:AddSection("Level Skip")
+    Tabs.Shop:AddSection("Auto Pass")
     
     -- Toggle Auto Compra +1 Nível
     Tabs.Shop:AddToggle("AutoBuyLevelSkip1", {
-        Title = "🔄 Auto Compra +1 Nível",
+        Title = "Lvl Pass 1",
         Description = "Compra automaticamente quando tiver 99+ tickets",
         Default = Settings.AutoBuyLevelSkip1,
         Callback = function(Value)
@@ -1349,7 +1349,7 @@ if shopData and shopData.Items then
     
     -- Toggle Auto Compra +10 Níveis
     Tabs.Shop:AddToggle("AutoBuyLevelSkip10", {
-        Title = "🔄 Auto Compra +10 Níveis",
+        Title = "Lvl Pass 10",
         Description = "Compra automaticamente quando tiver 999+ tickets",
         Default = Settings.AutoBuyLevelSkip10,
         Callback = function(Value)
@@ -1496,13 +1496,9 @@ Tabs.Settings:AddButton({
 -- NOTIFICAÇÃO FINAL
 -- =====================================================
 Fluent:Notify({
-    Title = "Allan Hub V2",
+    Title = "Allan Hub ",
     Content = "Script carregado com sucesso! 🎉",
     Duration = 6
 })
 
-print("✅ ALLAN HUB V2 CARREGADO")
-print("💾 Sistema de salvamento: ATIVO")
-print("🔮 Runas detectadas: " .. #AvailableRunes)
-print("🔑 Detecção automática de ID da dungeon: ATIVO")
-print("⚙️ Todas as configurações serão salvas automaticamente!")
+print("✅ ALLAN HUB CARREGADO")
