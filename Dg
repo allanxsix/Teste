@@ -295,7 +295,7 @@ local function CreateFloatingButton()
     Button.Size = UDim2.new(0, 50, 0, 50)
     Button.Position = UDim2.new(0.015, 0, 0.02, 20)
     Button.BackgroundTransparency = 1
-    Button.Image = "rbxassetid://112254107346248"
+    Button.Image = "rbxassetid://101910555555494"
     Button.ZIndex = 1000
 
     local UICorner = Instance.new("UICorner")
@@ -482,13 +482,13 @@ Tabs.Dungeon:AddToggle("AutoRebirth", {
 -- UI RUNAS
 -- =====================================================
 Tabs.Dungeon:AddParagraph({
-    Title = "🔮 Sistema de Runas",
+    Title = "Sistema de Runas",
     Content = "Runas detectadas: " .. #AvailableRunes .. "\nSelecione até 5 runas abaixo"
 })
 
 for slot = 1, MAX_RUNE_SLOTS do
     Tabs.Dungeon:AddDropdown("RuneSlot" .. slot, {
-        Title = "🔮 Runa Slot " .. slot,
+        Title = "Runa Slot " .. slot,
         Values = RuneNames,
         Default = Settings["RuneSlot" .. slot],
         Flag = "RuneSlot" .. slot,
@@ -518,7 +518,7 @@ for slot = 1, MAX_RUNE_SLOTS do
 end
 
 Tabs.Dungeon:AddToggle("UseRunesAuto", {
-    Title = "🔮 Usar Runas Automaticamente",
+    Title = "Usar Runas Automaticamente",
     Description = "Aplica as runas sempre que criar uma dungeon",
     Default = Settings.UseRunesAuto,
     Flag = "UseRunesAuto",
@@ -552,7 +552,7 @@ Tabs.Dungeon:AddToggle("UseRunesAuto", {
 })
 
 Tabs.Dungeon:AddButton({
-    Title = "🔄 Reescanear Runas",
+    Title = "Reescanear Runas",
     Description = "Atualiza a lista de runas disponíveis",
     Callback = function()
         ScanRunes()
@@ -1252,7 +1252,7 @@ if shopData and shopData.Items then
     
     -- Tickets Display
     local ticketInfo = Tabs.Shop:AddParagraph({
-        Title = "🎫 Tickets Disponíveis",
+        Title = "Tickets Disponíveis",
         Content = "Carregando..."
     })
     
@@ -1273,7 +1273,7 @@ if shopData and shopData.Items then
     
     -- Dropdown Runas
     Tabs.Shop:AddDropdown("RuneShopItems", {
-        Title = "🔮 Selecionar Runas",
+        Title = "Selecionar Runas",
         Values = runeItems,
         Multi = true,
         Default = Settings.SelectedShopRunes or {},
@@ -1315,7 +1315,7 @@ if shopData and shopData.Items then
     
     -- Toggle Auto Compra
     Tabs.Shop:AddToggle("AutoBuyRunes", {
-        Title = "🔄 Auto Compra de Runas",
+        Title = "Auto Compra de Runas",
         Description = "Compra automaticamente quando tiver tickets suficientes",
         Default = Settings.AutoBuyRunes,
         Callback = function(Value)
@@ -1437,7 +1437,7 @@ if shopData and shopData.Items then
     end)
 else
     Tabs.Shop:AddParagraph({
-        Title = "❌ Erro",
+        Title = "Erro",
         Content = "Rune Shop não encontrada no ShopInfo"
     })
 end
@@ -1448,12 +1448,12 @@ end
 SaveManager:BuildConfigSection(Tabs.Settings)
 
 Tabs.Settings:AddParagraph({
-    Title = "💾 Sistema de Salvamento",
+    Title = "Sistema de Salvamento",
     Content = "Suas configurações são salvas automaticamente!"
 })
 
 Tabs.Settings:AddButton({
-    Title = "💾 Salvar Configurações",
+    Title = "Salvar Configurações",
     Description = "Salva manualmente todas as configurações",
     Callback = function()
         SaveSettings()
@@ -1466,7 +1466,7 @@ Tabs.Settings:AddButton({
 })
 
 Tabs.Settings:AddButton({
-    Title = "🔄 Recarregar Configurações",
+    Title = "Recarregar Configurações",
     Description = "Recarrega as configurações do arquivo",
     Callback = function()
         LoadSettings()
@@ -1479,7 +1479,7 @@ Tabs.Settings:AddButton({
 })
 
 Tabs.Settings:AddButton({
-    Title = "🗑️ Resetar Todas Configurações",
+    Title = "Resetar Todas Configurações",
     Description = "Volta para os valores padrão",
     Callback = function()
         if delfile and isfile(SETTINGS_FILE) then
@@ -1513,7 +1513,7 @@ Tabs.Settings:AddButton({
 })
 
 Tabs.Settings:AddButton({
-    Title = "🔄 Reconectar Servidor",
+    Title = "Reconectar Servidor",
     Description = "Reconecta ao servidor atual",
     Callback = function()
         game:GetService("TeleportService"):Teleport(game.PlaceId, Player)
