@@ -196,6 +196,25 @@ if currentTime - lastNotificationTime >= notificationCooldown then
 end
 
 -- =====================================================
+-- ANTI-AFK SYSTEM
+-- =====================================================
+local vu = game:GetService("VirtualUser")
+
+-- Sistema que simula atividade a cada 10 minutos
+task.spawn(function()
+    while task.wait(600) do -- 600 segundos = 10 minutos
+        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end
+end)
+
+-- Backup: Também detecta quando o Roblox tenta kickar por inatividade
+game:GetService("Players").LocalPlayer.Idled:connect(function()
+    vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+end)
+
+-- =====================================================
 -- BRIDGENET2
 -- =====================================================
 local BridgeNet2 = require(ReplicatedStorage:WaitForChild("BridgeNet2"))
