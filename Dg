@@ -1108,7 +1108,7 @@ Tabs.Castle:AddToggle("CastleCreateOnly", {
 
 Tabs.Castle:AddDropdown("CastleSpeed", {
     Title = "Speed do Castelo",
-    Values = {"1", "2", "4"},
+    Values = {"1", "4", "8"},
     Default = Settings.CastleSpeed,
     Callback = function(v)
         selectedCastleSpeed = v
