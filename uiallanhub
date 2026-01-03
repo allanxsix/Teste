@@ -255,7 +255,7 @@ local libCreateNoti = function(Setting)
 	CloseImage.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 	CloseImage.BackgroundTransparency = 1.000
 	CloseImage.Size = UDim2.new(1, 0, 1, 0)
-	CloseImage.Image = "rbxassetid://129781592728096"
+	CloseImage.Image = "rbxassetid://82772182045582"
 	CloseImage.ImageRectOffset = Vector2.new(284, 4)
 	CloseImage.ImageRectSize = Vector2.new(24, 24)
 	CloseImage.ImageColor3 = cache.UIColor["Search Icon Color"]
@@ -326,7 +326,7 @@ end
 
 function Library.CreateMain(Setting)
 
-	local TitleNameMain =  "by vhai"
+	local TitleNameMain =  "by Allan"
 	cache.MainDesc = Setting.Desc or ""
 
 	local djtmemay = false
