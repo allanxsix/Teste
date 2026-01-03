@@ -220,6 +220,19 @@ local function SafeFire(payload)
     end
 end
 
+-- Proteger UI de ser deletada
+local function ProtectUI()
+    local success = pcall(function()
+        if gethui then
+            return gethui()
+        elseif syn and syn.protect_gui then
+            syn.protect_gui(CoreGui)
+        end
+    end)
+end
+
+ProtectUI()
+
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"))()
 
 local Main = Library.CreateMain({
