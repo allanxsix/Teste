@@ -43,7 +43,13 @@ local Settings = {
     CastleSpeed = "1",
     CastleSpeedEnabled = false,
     EntryFloor = 1,
-    ResetFloor = 100
+    ResetFloor = 100,
+    
+    -- Event Labyrinth
+    LabyrinthFloor = "180",
+    LabyrinthSpeed = "3",
+    LabyrinthSpeedEnabled = false,
+    AutoLabyrinth = false
 }
 
 local function SaveSettings()
@@ -1150,81 +1156,206 @@ SectionIslandsMain.CreateButton({
 end)
 
 -- Infinite Labyrinth
-local selectedLabyrinthFloor = "180"
-local selectedLabyrinthSpeed = "3"
-local autoLabyrinthEnabled = false
+local selectedLabyrinthFloor = Settings.LabyrinthFloor
+local selectedLabyrinthSpeed = Settings.LabyrinthSpeed
+local autoLabyrinthEnabled = Settings.AutoLabyrinth
 local creatingLabyrinth = false
+local labyrinthSpeedEnabled = Settings.LabyrinthSpeedEnabled
+local labyrinthSessionActive = false
+local autoSpeedLoopLabyrinth = false
 
--- Função para verificar se está dentro do labirinto infinito
+-- Função melhorada para verificar se está dentro do labirinto infinito
 local function IsInsideLabyrinth()
+    -- Verificar pelo ReplicatedStorage
     local infos = ReplicatedStorage:FindFirstChild("__Infos")
-    if not infos then return false end
-    
-    local labyrinth = infos:FindFirstChild("__InfiniteLabyrinth")
-    if not labyrinth then return false end
-    
-    -- Verificar se o player é o líder do labirinto
-    for _, lab in ipairs(labyrinth:GetChildren()) do
-        local leader = lab:GetAttribute("Leader")
-        if leader == Player.UserId then
-            return true")
-                        
-                        -- Aguardar um pouco antes de recriar
-                        task.wait(3)
-                        
-                        -- Verificar se ainda não está dentro de uma dungeon antes de recriar
-                        if autoLabyrinthEnabled and not creatingLabyrinth and not IsInsideLabyrinth() then
-                            creatingLabyrinth = true
-                            
-                            print("Recriando labirinto...")
-                            
-                            -- Criar labirinto
-                            SafeFire({
-                                Event = "InfiniteLabyrinthAction",
-                                Action = "Create"
-                            })
-                            
-                            task.wait(2)
-                            
-                            -- Iniciar labirinto
-                            SafeFire({
-                                Dungeon = Player.UserId,
-                                Check = selectedLabyrinthFloor,
-                                Event = "InfiniteLabyrinthAction",
-                                Action = "Start"
-                            })
-                            
-                            print("Labirinto recriado e iniciado automaticamente no andar " .. selectedLabyrinthFloor)
-                            
-                            creatingLabyrinth = false
-                        else
-                            print("Já está dentro de um labirinto, não recriando.")
-                            -- Criar labirinto
-                            SafeFire({
-                                Event = "InfiniteLabyrinthAction",
-                                Action = "Create"
-                            })
-                            
-                            task.wait(2)
-                            
-                            -- Iniciar labirinto
-                            SafeFire({
-                                Dungeon = Player.UserId,
-                                Check = selectedLabyrinthFloor,
-                                Event = "InfiniteLabyrinthAction",
-                                Action = "Start"
-                            })
-                            
-                            print("Labirinto recriado e iniciado automaticamente no andar " .. selectedLabyrinthFloor)
-                            
-                            creatingLabyrinth = false
-                        end
-                    end
+    if infos then
+        local labyrinth = infos:FindFirstChild("__InfiniteLabyrinth")
+        if labyrinth then
+            for _, lab in ipairs(labyrinth:GetChildren()) do
+                local leader = lab:GetAttribute("Leader")
+                if leader == Player.UserId then
+                    return true
                 end
             end
         end
     end
-end)
+    
+    -- Verificar pelo workspace
+    local main = workspace:FindFirstChild("__Main")
+    if main then
+        local world = main:FindFirstChild("__World")
+        if world and (world.Name == "InfiniteLabyrinth" or world.Name == "LabyrinthInfinite") then
+            return true
+        end
+    end
+    
+    -- Verificar pela altitude do player
+    if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+        local position = Player.Character.HumanoidRootPart.Position
+        if position.Y > 5000 then
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Função para aplicar velocidade
+local function aplicarVelocidadeLabirinto()
+    if not IsInsideLabyrinth() then return end
+    
+    SafeFire({
+        Speed = tonumber(selectedLabyrinthSpeed),
+        Event = "InfiniteLabyrinthAction",
+        Action = "SpeedUp"
+    })
+end
+
+-- Auto velocidade com loop
+local function iniciarAutoVelocidadeLabirinto()
+    if autoSpeedLoopLabyrinth then return end
+    autoSpeedLoopLabyrinth = true
+    
+    task.spawn(function()
+        while labyrinthSpeedEnabled and autoSpeedLoopLabyrinth and labyrinthSessionActive do
+            if IsInsideLabyrinth() then
+                aplicarVelocidadeLabirinto()
+            end
+            task.wait(10)
+        end
+        autoSpeedLoopLabyrinth = false
+    end)
+end
+
+-- Parar auto velocidade
+local function pararAutoVelocidadeLabirinto()
+    labyrinthSpeedEnabled = false
+    autoSpeedLoopLabyrinth = false
+end
+
+-- Monitorar saída do labirinto
+local function monitorarSaidaLabirinto()
+    task.spawn(function()
+        local tentativasConsecutivas = 0
+        local maxTentativas = 3
+        
+        while labyrinthSessionActive do
+            local dentroDoLabirinto = IsInsideLabyrinth()
+            
+            if not dentroDoLabirinto then
+                tentativasConsecutivas += 1
+                print("[Labirinto] Fora do labirinto - Tentativa " .. tentativasConsecutivas .. "/" .. maxTentativas)
+                
+                if tentativasConsecutivas >= maxTentativas then
+                    print("[Labirinto] Portal destruído confirmado! Recriando...")
+                    labyrinthSessionActive = false
+                    pararAutoVelocidadeLabirinto()
+                    
+                    if autoLabyrinthEnabled then
+                        task.wait(3)
+                        RecreateLabyrinth()
+                    end
+                    break
+                end
+            else
+                tentativasConsecutivas = 0
+            end
+            
+            task.wait(3)
+        end
+    end)
+end
+
+-- Resetar estado da sessão
+local function resetarEstadoLabirinto()
+    labyrinthSessionActive = false
+    pararAutoVelocidadeLabirinto()
+end
+
+-- Função para recriar o labirinto
+local function RecreateLabyrinth()
+    if creatingLabyrinth then return end
+    
+    creatingLabyrinth = true
+    labyrinthSessionActive = true
+    
+    print("[Labirinto] Criando labirinto no andar " .. selectedLabyrinthFloor .. "...")
+    
+    -- Criar labirinto
+    SafeFire({
+        Event = "InfiniteLabyrinthAction",
+        Action = "Create"
+    })
+    
+    task.wait(2)
+    
+    -- Iniciar labirinto
+    SafeFire({
+        Dungeon = Player.UserId,
+        Check = selectedLabyrinthFloor,
+        Event = "InfiniteLabyrinthAction",
+        Action = "Start"
+    })
+    
+    task.wait(3)
+    
+    -- Verificar se entrou com sucesso
+    local startSuccess = false
+    for tentativa = 1, 3 do
+        if IsInsideLabyrinth() then
+            startSuccess = true
+            print("[Labirinto] Entrada confirmada!")
+            break
+        end
+        task.wait(2)
+    end
+    
+    if not startSuccess then
+        print("[Labirinto] Falha ao entrar. Resetando...")
+        resetarEstadoLabirinto()
+        creatingLabyrinth = false
+        return
+    end
+    
+    print("[Labirinto] Labirinto criado com sucesso!")
+    
+    -- Aplicar velocidade se ativada
+    if labyrinthSpeedEnabled then
+        task.wait(1)
+        aplicarVelocidadeLabirinto()
+        iniciarAutoVelocidadeLabirinto()
+    end
+    
+    -- Iniciar monitoramento
+    monitorarSaidaLabirinto()
+    
+    creatingLabyrinth = false
+end
+
+-- Iniciar labirinto infinito
+local function iniciarLabirintoInfinito()
+    if labyrinthSessionActive then 
+        print("[Labirinto] Sessão já ativa")
+        return 
+    end
+    
+    -- Se já está dentro, apenas ativar velocidade e monitoramento
+    if IsInsideLabyrinth() then
+        print("[Labirinto] Já está dentro! Ativando sistemas...")
+        labyrinthSessionActive = true
+        
+        if labyrinthSpeedEnabled then
+            aplicarVelocidadeLabirinto()
+            iniciarAutoVelocidadeLabirinto()
+        end
+        
+        monitorarSaidaLabirinto()
+        return
+    end
+    
+    -- Se não está dentro, criar novo
+    RecreateLabyrinth()
+end
 
 -- Gerar lista de andares de 1 até 360 (de 30 em 30)
 local function GenerateFloorList()
@@ -1238,65 +1369,84 @@ end
 SectionEventMain.CreateDropdown({
     Title = "Selecionar Andar",
     List = GenerateFloorList(),
-    Default = "180"
+    Default = Settings.LabyrinthFloor
 }, function(v)
     selectedLabyrinthFloor = v
+    Settings.LabyrinthFloor = v
+    SaveSettings()
 end)
 
 SectionEventMain.CreateDropdown({
     Title = "Selecionar Speed",
     List = {"1", "3", "6"},
-    Default = "3"
+    Default = Settings.LabyrinthSpeed
 }, function(v)
     selectedLabyrinthSpeed = v
+    Settings.LabyrinthSpeed = v
+    SaveSettings()
+    
+    if labyrinthSpeedEnabled then
+        SafeFire({
+            Speed = tonumber(selectedLabyrinthSpeed),
+            Event = "InfiniteLabyrinthAction",
+            Action = "SpeedUp"
+        })
+    end
 end)
 
-SectionEventMain.CreateButton({
-    Title = "Ativar Speed"
-}, function()
-    SafeFire({
-        Speed = tonumber(selectedLabyrinthSpeed),
-        Event = "InfiniteLabyrinthAction",
-        Action = "SpeedUp"
-    })
+SectionEventMain.CreateToggle({
+    Title = "Ativar Speed do Labirinto",
+    Default = Settings.LabyrinthSpeedEnabled
+}, function(v)
+    labyrinthSpeedEnabled = v
+    Settings.LabyrinthSpeedEnabled = v
+    SaveSettings()
     
-    Library.CreateNoti({
-        Title = "Speed Labirinto",
-        Desc = "Velocidade definida para x" .. selectedLabyrinthSpeed,
-        ShowTime = 3
-    })
+    if v then
+        if IsInsideLabyrinth() then
+            aplicarVelocidadeLabirinto()
+            iniciarAutoVelocidadeLabirinto()
+            
+            Library.CreateNoti({
+                Title = "Speed Labirinto",
+                Desc = "Velocidade x" .. selectedLabyrinthSpeed .. " ativada com auto-reaplica!",
+                ShowTime = 3
+            })
+        else
+            Library.CreateNoti({
+                Title = "Speed Labirinto",
+                Desc = "Entre no labirinto para ativar a speed!",
+                ShowTime = 3
+            })
+        end
+    else
+        pararAutoVelocidadeLabirinto()
+    end
 end)
 
 SectionEventMain.CreateToggle({
     Title = "Auto Criar e Iniciar",
-    Desc = "Cria e inicia automaticamente (sem speed)"
+    Desc = "Cria e recria automaticamente quando portal for destruído",
+    Default = Settings.AutoLabyrinth
 }, function(v)
     autoLabyrinthEnabled = v
+    Settings.AutoLabyrinth = v
+    SaveSettings()
     
     if v then
-        task.spawn(function()
-            -- Criar labirinto
-            SafeFire({
-                Event = "InfiniteLabyrinthAction",
-                Action = "Create"
-            })
-            
-            task.wait(2)
-            
-            -- Iniciar labirinto
-            SafeFire({
-                Dungeon = Player.UserId,
-                Check = selectedLabyrinthFloor,
-                Event = "InfiniteLabyrinthAction",
-                Action = "Start"
-            })
-            
-            Library.CreateNoti({
-                Title = "Auto Labirinto",
-                Desc = "Labirinto criado e iniciado no andar " .. selectedLabyrinthFloor .. "\nAtivar speed manualmente!",
-                ShowTime = 4
-            })
-        end)
+        iniciarLabirintoInfinito()
+        Library.CreateNoti({
+            Title = "Auto Labirinto",
+            Desc = "Sistema automático ativado!\nRecriar ao destruir portal: SIM",
+            ShowTime = 4
+        })
+    else
+        resetarEstadoLabirinto()
+        Library.CreateNoti({
+            Title = "Auto Labirinto",
+            Desc = "Sistema automático desativado!",
+            ShowTime = 3
+        })
     end
 end)
 
@@ -1348,6 +1498,10 @@ SectionSettings.CreateButton({
             Settings[key] = 1
         elseif key == "ResetFloor" then
             Settings[key] = 100
+        elseif key == "LabyrinthFloor" then
+            Settings[key] = "180"
+        elseif key == "LabyrinthSpeed" then
+            Settings[key] = "3"
         end
     end
     
