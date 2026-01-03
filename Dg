@@ -15,6 +15,7 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local VIM = game:GetService("VirtualInputManager")
+local VU = game:GetService("VirtualUser")
 local Player = Players.LocalPlayer
 
 -- =====================================================
@@ -718,23 +719,23 @@ task.spawn(function()
         task.wait(40)
     end
 end)
-
--- Sistema Anti-AFK (Click a cada 19 minutos)
+=====================================================
+-- SISTEMA ANTI-AFK
+-- =====================================================
+-- Sistema que simula atividade a cada 10 minutos
 task.spawn(function()
-    while true do
-        task.wait(1140) -- 19 minutos = 1140 segundos
-        
-        pcall(function()
-            local screenSize = workspace.CurrentCamera.ViewportSize
-            local randomX = math.random(100, screenSize.X - 100)
-            local randomY = math.random(100, screenSize.Y - 100)
-            
-            VIM:SendMouseButtonEvent(randomX, randomY, 0, true, game, 0)
-            task.wait(0.1)
-            VIM:SendMouseButtonEvent(randomX, randomY, 0, false, game, 0)
-            
-            print("Anti-AFK: Click simulado")
-        end)
+    while task.wait(600) do -- 600 segundos = 10 minutos
+        VU:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        VU:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        print("Anti-AFK: Atividade simulada")
+    end
+end)
+
+-- Backup: Também detecta quando o Roblox tenta kickar por inatividade
+Player.Idled:Connect(function()
+    VU:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    VU:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    print("Anti-AFK: Kickar prevenido") end)
     end
 end)
 
