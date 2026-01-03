@@ -1163,6 +1163,8 @@ local creatingLabyrinth = false
 local labyrinthSpeedEnabled = Settings.LabyrinthSpeedEnabled
 local labyrinthSessionActive = false
 local autoSpeedLoopLabyrinth = false
+local ultimaCriacaoLabirinto = 0
+local ultimaCriacaoLabirinto = 0
 
 -- Função para pegar o nome do mundo atual
 local function GetCurrentWorldName()
@@ -1252,12 +1254,12 @@ end
 -- Monitorar saída do labirinto
 local function monitorarSaidaLabirinto()
     task.spawn(function()
-        -- Período de graça de 15 segundos após entrar (evita falsos positivos por lag)
-        print("[Labirinto] Iniciando monitoramento (15s de período de graça)...")
-        task.wait(15)
+        -- Período de graça de 30 segundos após entrar (evita falsos positivos por lag)
+        print("[Labirinto] Iniciando monitoramento (30s de período de graça)...")
+        task.wait(30)
         
         local tentativasConsecutivas = 0
-        local maxTentativas = 3
+        local maxTentativas = 5
         
         while labyrinthSessionActive do
             local dentroDoLabirinto = IsInsideLabyrinth()
@@ -1272,7 +1274,7 @@ local function monitorarSaidaLabirinto()
                     pararAutoVelocidadeLabirinto()
                     
                     if autoLabyrinthEnabled then
-                        task.wait(3)
+                        task.wait(5)
                         RecreateLabyrinth()
                     end
                     break
@@ -1281,7 +1283,7 @@ local function monitorarSaidaLabirinto()
                 tentativasConsecutivas = 0
             end
             
-            task.wait(3)
+            task.wait(5)
         end
     end)
 end
@@ -1313,6 +1315,30 @@ local function RecreateLabyrinth()
         return
     end
     
+    -- NOVA VERIFICAÇÃO: Se já existe um portal ativo no ReplicatedStorage
+    local infos = ReplicatedStorage:FindFirstChild("__Infos")
+    if infos then
+        local labyrinth = infos:FindFirstChild("__InfiniteLabyrinth")
+        if labyrinth then
+            for _, lab in ipairs(labyrinth:GetChildren()) do
+                local leader = lab:GetAttribute("Leader")
+                if leader == Player.UserId then
+                    print("[Labirinto] Portal ativo encontrado no ReplicatedStorage! Cancelando recriação.")
+                    return
+                end
+            end
+        end
+    end
+    
+    -- COOLDOWN: Evitar múltiplas criações em curto período
+    local tempoAtual = tick()
+    if tempoAtual - ultimaCriacaoLabirinto < 10 then
+        local tempoRestante = math.ceil(10 - (tempoAtual - ultimaCriacaoLabirinto))
+        print("[Labirinto] Cooldown ativo! Aguarde " .. tempoRestante .. " segundos.")
+        return
+    end
+    
+    ultimaCriacaoLabirinto = tempoAtual
     creatingLabyrinth = true
     labyrinthSessionActive = true
     
