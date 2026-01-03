@@ -450,7 +450,7 @@ function Library.CreateMain(Setting)
 	local colorG = tostring(Library_Function.Getcolor(cache.UIColor['Title Text Color'])[2])
 	local colorB = tostring(Library_Function.Getcolor(cache.UIColor['Title Text Color'])[3])
 	local color = colorR .. ',' .. colorG .. ',' .. colorB
-	TextLabelMain.Text = "<font color=\"rgb("..color..")\">Teddy Hub </font> " .. ": Blox Fruits"
+	TextLabelMain.Text = "<font color=\"rgb("..color..")\">Allan Hub </font> " .. ": By Allan"
 
 	PageControl.Name = "Background1"
 	PageControl.Parent = Concacmain
