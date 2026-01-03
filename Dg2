@@ -1184,13 +1184,26 @@ local function IsInsideLabyrinth()
         print("[Labirinto Debug] Mundo atual: " .. worldName)
     end
     
-    -- VERIFICAÇÃO PRINCIPAL: Nome do mundo
+    -- VERIFICAÇÃO 1: Objeto InfiniteLabyrinth no workspace
+    local main = workspace:FindFirstChild("__Main")
+    if main then
+        local world = main:FindFirstChild("__World")
+        if world then
+            local infiniteLabyrinth = world:FindFirstChild("InfiniteLabyrinth")
+            if infiniteLabyrinth then
+                print("[Labirinto Debug] ✓ DENTRO - Detectado objeto InfiniteLabyrinth no workspace")
+                return true
+            end
+        end
+    end
+    
+    -- VERIFICAÇÃO 2: Nome do mundo
     if worldName and (worldName == "InfiniteLabyrinth" or worldName == "LabyrinthInfinite" or worldName:find("Labyrinth")) then
-        print("[Labirinto Debug] DENTRO - Detectado pelo nome do mundo: " .. worldName)
+        print("[Labirinto Debug] ✓ DENTRO - Detectado pelo nome do mundo: " .. worldName)
         return true
     end
     
-    -- Verificar pelo ReplicatedStorage
+    -- VERIFICAÇÃO 3: ReplicatedStorage
     local infos = ReplicatedStorage:FindFirstChild("__Infos")
     if infos then
         local labyrinth = infos:FindFirstChild("__InfiniteLabyrinth")
@@ -1198,23 +1211,23 @@ local function IsInsideLabyrinth()
             for _, lab in ipairs(labyrinth:GetChildren()) do
                 local leader = lab:GetAttribute("Leader")
                 if leader == Player.UserId then
-                    print("[Labirinto Debug] DENTRO - Detectado pelo ReplicatedStorage (Leader)")
+                    print("[Labirinto Debug] ✓ DENTRO - Detectado pelo ReplicatedStorage (Leader)")
                     return true
                 end
             end
         end
     end
     
-    -- Verificar pela altitude do player
+    -- VERIFICAÇÃO 4: Altitude do player
     if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
         local position = Player.Character.HumanoidRootPart.Position
         if position.Y > 5000 then
-            print("[Labirinto Debug] DENTRO - Detectado pela altitude (Y > 5000)")
+            print("[Labirinto Debug] ✓ DENTRO - Detectado pela altitude (Y > 5000)")
             return true
         end
     end
     
-    print("[Labirinto Debug] FORA DO LABIRINTO")
+    print("[Labirinto Debug] ✗ FORA DO LABIRINTO")
     return false
 end
 
@@ -1297,19 +1310,23 @@ end
 -- Função para recriar o labirinto
 local function RecreateLabyrinth()
     if creatingLabyrinth then 
-        print("[Labirinto] Já está criando um labirinto, aguarde...")
+        print("[Labirinto] ⏸️ Já está criando um labirinto, aguarde...")
         return 
     end
     
     -- VERIFICAÇÃO CRÍTICA: Se já está dentro, NÃO recriar
     if IsInsideLabyrinth() then
-        print("[Labirinto] JÁ ESTÁ DENTRO DO LABIRINTO! Cancelando recriação.")
+        print("[Labirinto] ⛔ JÁ ESTÁ DENTRO DO LABIRINTO! Cancelando recriação.")
         labyrinthSessionActive = true
         
         -- Apenas ativar velocidade e monitoramento se necessário
         if labyrinthSpeedEnabled and not autoSpeedLoopLabyrinth then
             aplicarVelocidadeLabirinto()
             iniciarAutoVelocidadeLabirinto()
+        end
+        
+        if not labyrinthSessionActive then
+            monitorarSaidaLabirinto()
         end
         
         return
@@ -1323,7 +1340,7 @@ local function RecreateLabyrinth()
             for _, lab in ipairs(labyrinth:GetChildren()) do
                 local leader = lab:GetAttribute("Leader")
                 if leader == Player.UserId then
-                    print("[Labirinto] Portal ativo encontrado no ReplicatedStorage! Cancelando recriação.")
+                    print("[Labirinto] ⛔ Portal ativo encontrado no ReplicatedStorage! Cancelando recriação.")
                     return
                 end
             end
@@ -1334,7 +1351,7 @@ local function RecreateLabyrinth()
     local tempoAtual = tick()
     if tempoAtual - ultimaCriacaoLabirinto < 10 then
         local tempoRestante = math.ceil(10 - (tempoAtual - ultimaCriacaoLabirinto))
-        print("[Labirinto] Cooldown ativo! Aguarde " .. tempoRestante .. " segundos.")
+        print("[Labirinto] ⏱️ Cooldown ativo! Aguarde " .. tempoRestante .. " segundos.")
         return
     end
     
@@ -1342,7 +1359,7 @@ local function RecreateLabyrinth()
     creatingLabyrinth = true
     labyrinthSessionActive = true
     
-    print("[Labirinto] Criando labirinto no andar " .. selectedLabyrinthFloor .. "...")
+    print("[Labirinto] 🔨 Criando labirinto no andar " .. selectedLabyrinthFloor .. "...")
     print("[Labirinto] Mundo atual antes de criar: " .. (GetCurrentWorldName() or "Desconhecido"))
     
     -- Criar labirinto
@@ -1408,9 +1425,9 @@ local function iniciarLabirintoInfinito()
     print("  - Dentro do labirinto: " .. tostring(dentroDoLabirinto))
     print("  - Mundo atual: " .. (worldName or "Desconhecido"))
     
-    -- Se já está dentro, apenas ativar velocidade e monitoramento
+    -- PROTEÇÃO CRÍTICA: Se já está dentro, NUNCA criar novo
     if dentroDoLabirinto then
-        print("[Labirinto] JÁ ESTÁ DENTRO! Ativando apenas sistemas de suporte...")
+        print("[Labirinto] ⚠️ JÁ ESTÁ DENTRO! Cancelando criação para evitar duplicação.")
         
         if not labyrinthSessionActive then
             labyrinthSessionActive = true
@@ -1426,6 +1443,21 @@ local function iniciarLabirintoInfinito()
         return
     end
     
+    -- Verificar se há portal ativo no ReplicatedStorage
+    local infos = ReplicatedStorage:FindFirstChild("__Infos")
+    if infos then
+        local labyrinth = infos:FindFirstChild("__InfiniteLabyrinth")
+        if labyrinth then
+            for _, lab in ipairs(labyrinth:GetChildren()) do
+                local leader = lab:GetAttribute("Leader")
+                if leader == Player.UserId then
+                    print("[Labirinto] ⚠️ Portal ativo detectado! Cancelando criação.")
+                    return
+                end
+            end
+        end
+    end
+    
     -- Se sessão já está ativa mas não está dentro, resetar primeiro
     if labyrinthSessionActive then
         print("[Labirinto] Sessão ativa mas não está dentro. Resetando...")
@@ -1433,8 +1465,8 @@ local function iniciarLabirintoInfinito()
         task.wait(2)
     end
     
-    -- Se não está dentro, criar novo
-    print("[Labirinto] Não está dentro. Iniciando criação...")
+    -- Se não está dentro e não há sessão ativa, criar novo
+    print("[Labirinto] ✓ Condições OK. Iniciando criação...")
     RecreateLabyrinth()
 end
 
@@ -1515,12 +1547,37 @@ SectionEventMain.CreateToggle({
     SaveSettings()
     
     if v then
-        iniciarLabirintoInfinito()
-        Library.CreateNoti({
-            Title = "Auto Labirinto",
-            Desc = "Sistema automático ativado!\nRecriar ao destruir portal: SIM",
-            ShowTime = 4
-        })
+        -- Esperar 2 segundos para garantir que o jogo carregou completamente
+        task.wait(2)
+        
+        -- Verificar se já está dentro ANTES de iniciar
+        if IsInsideLabyrinth() then
+            print("[Labirinto] DETECTADO: Já está dentro ao ativar toggle!")
+            labyrinthSessionActive = true
+            
+            -- Apenas ativar sistemas de suporte
+            if labyrinthSpeedEnabled then
+                task.wait(1)
+                aplicarVelocidadeLabirinto()
+                iniciarAutoVelocidadeLabirinto()
+            end
+            
+            monitorarSaidaLabirinto()
+            
+            Library.CreateNoti({
+                Title = "Auto Labirinto",
+                Desc = "Já está dentro! Monitoramento ativado.",
+                ShowTime = 4
+            })
+        else
+            -- Não está dentro, pode iniciar normalmente
+            iniciarLabirintoInfinito()
+            Library.CreateNoti({
+                Title = "Auto Labirinto",
+                Desc = "Sistema automático ativado!\nRecriar ao destruir portal: SIM",
+                ShowTime = 4
+            })
+        end
     else
         resetarEstadoLabirinto()
         Library.CreateNoti({
