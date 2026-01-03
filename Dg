@@ -719,6 +719,25 @@ task.spawn(function()
     end
 end)
 
+-- Sistema Anti-AFK (Click a cada 19 minutos)
+task.spawn(function()
+    while true do
+        task.wait(1140) -- 19 minutos = 1140 segundos
+        
+        pcall(function()
+            local screenSize = workspace.CurrentCamera.ViewportSize
+            local randomX = math.random(100, screenSize.X - 100)
+            local randomY = math.random(100, screenSize.Y - 100)
+            
+            VIM:SendMouseButtonEvent(randomX, randomY, 0, true, game, 0)
+            task.wait(0.1)
+            VIM:SendMouseButtonEvent(randomX, randomY, 0, false, game, 0)
+            
+            print("Anti-AFK: Click simulado")
+        end)
+    end
+end)
+
 RunService.Heartbeat:Connect(function(dt)
     rebirthCooldown += dt
 
