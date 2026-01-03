@@ -99,10 +99,30 @@ local function makeDraggable(topBarObject, object)
 	end)
 end
 
+-- Proteger UI de ser deletada
+local function GetProtectedParent()
+	if gethui then
+		return gethui()
+	elseif syn and syn.protect_gui then
+		local CoreGui = game:GetService("CoreGui")
+		return CoreGui
+	else
+		return game:GetService("CoreGui")
+	end
+end
+
 Library_Function.Gui = Instance.new('ScreenGui')
-Library_Function.Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Library_Function.Gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+Library_Function.Gui.DisplayOrder = 999999999
+Library_Function.Gui.ResetOnSpawn = false
 Library_Function.Gui.Name = 'noguchihyuga'
 Library_Function.Gui.Enabled = false
+Library_Function.Gui.Parent = GetProtectedParent()
+
+-- Proteção extra contra destruição
+if syn and syn.protect_gui then
+	syn.protect_gui(Library_Function.Gui)
+end
 
 cache.ReadyForGuiLoaded = false
 spawn(function()
@@ -115,12 +135,26 @@ end)
 
 
 Library_Function.NotiGui = Instance.new('ScreenGui')
-Library_Function.NotiGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Library_Function.NotiGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+Library_Function.NotiGui.DisplayOrder = 999999999
+Library_Function.NotiGui.ResetOnSpawn = false
 Library_Function.NotiGui.Name = 'noguchi.hyuga Notification'
+Library_Function.NotiGui.Parent = GetProtectedParent()
+
+if syn and syn.protect_gui then
+	syn.protect_gui(Library_Function.NotiGui)
+end
 
 Library_Function.HideGui = Instance.new('ScreenGui')
-Library_Function.HideGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Library_Function.HideGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+Library_Function.HideGui.DisplayOrder = 999999999
+Library_Function.HideGui.ResetOnSpawn = false
 Library_Function.HideGui.Name = 'noguchi.hyuga Btn'
+Library_Function.HideGui.Parent = GetProtectedParent()
+
+if syn and syn.protect_gui then
+	syn.protect_gui(Library_Function.HideGui)
+end
 
 
 
