@@ -1164,8 +1164,30 @@ local labyrinthSpeedEnabled = Settings.LabyrinthSpeedEnabled
 local labyrinthSessionActive = false
 local autoSpeedLoopLabyrinth = false
 
+-- Função para pegar o nome do mundo atual
+local function GetCurrentWorldName()
+    local main = workspace:FindFirstChild("__Main")
+    if not main then return nil end
+    local world = main:FindFirstChild("__World")
+    if not world then return nil end
+    return world.Name
+end
+
 -- Função melhorada para verificar se está dentro do labirinto infinito
 local function IsInsideLabyrinth()
+    local worldName = GetCurrentWorldName()
+    
+    -- Log do mundo atual para debug
+    if worldName then
+        print("[Labirinto Debug] Mundo atual: " .. worldName)
+    end
+    
+    -- VERIFICAÇÃO PRINCIPAL: Nome do mundo
+    if worldName and (worldName == "InfiniteLabyrinth" or worldName == "LabyrinthInfinite" or worldName:find("Labyrinth")) then
+        print("[Labirinto Debug] DENTRO - Detectado pelo nome do mundo: " .. worldName)
+        return true
+    end
+    
     -- Verificar pelo ReplicatedStorage
     local infos = ReplicatedStorage:FindFirstChild("__Infos")
     if infos then
@@ -1174,18 +1196,10 @@ local function IsInsideLabyrinth()
             for _, lab in ipairs(labyrinth:GetChildren()) do
                 local leader = lab:GetAttribute("Leader")
                 if leader == Player.UserId then
+                    print("[Labirinto Debug] DENTRO - Detectado pelo ReplicatedStorage (Leader)")
                     return true
                 end
             end
-        end
-    end
-    
-    -- Verificar pelo workspace
-    local main = workspace:FindFirstChild("__Main")
-    if main then
-        local world = main:FindFirstChild("__World")
-        if world and (world.Name == "InfiniteLabyrinth" or world.Name == "LabyrinthInfinite") then
-            return true
         end
     end
     
@@ -1193,10 +1207,12 @@ local function IsInsideLabyrinth()
     if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
         local position = Player.Character.HumanoidRootPart.Position
         if position.Y > 5000 then
+            print("[Labirinto Debug] DENTRO - Detectado pela altitude (Y > 5000)")
             return true
         end
     end
     
+    print("[Labirinto Debug] FORA DO LABIRINTO")
     return false
 end
 
@@ -1278,12 +1294,30 @@ end
 
 -- Função para recriar o labirinto
 local function RecreateLabyrinth()
-    if creatingLabyrinth then return end
+    if creatingLabyrinth then 
+        print("[Labirinto] Já está criando um labirinto, aguarde...")
+        return 
+    end
+    
+    -- VERIFICAÇÃO CRÍTICA: Se já está dentro, NÃO recriar
+    if IsInsideLabyrinth() then
+        print("[Labirinto] JÁ ESTÁ DENTRO DO LABIRINTO! Cancelando recriação.")
+        labyrinthSessionActive = true
+        
+        -- Apenas ativar velocidade e monitoramento se necessário
+        if labyrinthSpeedEnabled and not autoSpeedLoopLabyrinth then
+            aplicarVelocidadeLabirinto()
+            iniciarAutoVelocidadeLabirinto()
+        end
+        
+        return
+    end
     
     creatingLabyrinth = true
     labyrinthSessionActive = true
     
     print("[Labirinto] Criando labirinto no andar " .. selectedLabyrinthFloor .. "...")
+    print("[Labirinto] Mundo atual antes de criar: " .. (GetCurrentWorldName() or "Desconhecido"))
     
     -- Criar labirinto
     SafeFire({
@@ -1338,26 +1372,43 @@ end
 
 -- Iniciar labirinto infinito
 local function iniciarLabirintoInfinito()
-    if labyrinthSessionActive then 
-        print("[Labirinto] Sessão já ativa")
-        return 
-    end
+    print("[Labirinto] iniciarLabirintoInfinito() chamado")
+    
+    local dentroDoLabirinto = IsInsideLabyrinth()
+    local worldName = GetCurrentWorldName()
+    
+    print("[Labirinto] Estado atual:")
+    print("  - Sessão ativa: " .. tostring(labyrinthSessionActive))
+    print("  - Dentro do labirinto: " .. tostring(dentroDoLabirinto))
+    print("  - Mundo atual: " .. (worldName or "Desconhecido"))
     
     -- Se já está dentro, apenas ativar velocidade e monitoramento
-    if IsInsideLabyrinth() then
-        print("[Labirinto] Já está dentro! Ativando sistemas...")
-        labyrinthSessionActive = true
+    if dentroDoLabirinto then
+        print("[Labirinto] JÁ ESTÁ DENTRO! Ativando apenas sistemas de suporte...")
         
-        if labyrinthSpeedEnabled then
-            aplicarVelocidadeLabirinto()
-            iniciarAutoVelocidadeLabirinto()
+        if not labyrinthSessionActive then
+            labyrinthSessionActive = true
+            
+            if labyrinthSpeedEnabled then
+                task.wait(1)
+                aplicarVelocidadeLabirinto()
+                iniciarAutoVelocidadeLabirinto()
+            end
+            
+            monitorarSaidaLabirinto()
         end
-        
-        monitorarSaidaLabirinto()
         return
     end
     
+    -- Se sessão já está ativa mas não está dentro, resetar primeiro
+    if labyrinthSessionActive then
+        print("[Labirinto] Sessão ativa mas não está dentro. Resetando...")
+        resetarEstadoLabirinto()
+        task.wait(2)
+    end
+    
     -- Se não está dentro, criar novo
+    print("[Labirinto] Não está dentro. Iniciando criação...")
     RecreateLabyrinth()
 end
 
