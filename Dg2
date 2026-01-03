@@ -4,9 +4,6 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
--- =====================================================
--- SERVICES
--- =====================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -14,6 +11,8 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
+local VIM = game:GetService("VirtualInputManager")
+local VU = game:GetService("VirtualUser")
 local Player = Players.LocalPlayer
 
 -- =====================================================
@@ -44,40 +43,34 @@ local Settings = {
     CastleSpeed = "1",
     CastleSpeedEnabled = false,
     EntryFloor = 1,
-    ResetFloor = 100,
-    
-    -- Shop
-    AutoBuyRunes = false,
-    AutoBuyLevelSkip1 = false,
-    AutoBuyLevelSkip10 = false,
-    SelectedShopRunes = {}
+    ResetFloor = 100
 }
 
 local function SaveSettings()
     if not writefile then 
-        warn("⚠️ Executor não suporta writefile!")
+        warn("Executor não suporta writefile!")
         return 
     end
     
     local success, err = pcall(function()
         local encoded = HttpService:JSONEncode(Settings)
         writefile(SETTINGS_FILE, encoded)
-        print("✅ Configurações salvas!")
+        print("Configurações salvas!")
     end)
     
     if not success then
-        warn("❌ Erro ao salvar:", err)
+        warn("Erro ao salvar:", err)
     end
 end
 
 local function LoadSettings()
     if not readfile or not isfile then
-        warn("⚠️ Executor não suporta readfile!")
+        warn("Executor não suporta readfile!")
         return
     end
     
     if not isfile(SETTINGS_FILE) then
-        print("📁 Criando arquivo de configuração...")
+        print("Criando arquivo de configuração...")
         SaveSettings()
         return
     end
@@ -92,19 +85,16 @@ local function LoadSettings()
             end
         end
         
-        print("✅ Configurações carregadas!")
+        print("Configurações carregadas!")
     end)
     
     if not success then
-        warn("❌ Erro ao carregar:", err)
+        warn("Erro ao carregar:", err)
     end
 end
 
 LoadSettings()
 
--- =====================================================
--- SISTEMA DE RUNAS DA DUNGEON (PERSISTENTE)
--- =====================================================
 local function SaveDungeonRunes()
     if not writefile then return end
     
@@ -119,11 +109,11 @@ local function SaveDungeonRunes()
     local success, err = pcall(function()
         local encoded = HttpService:JSONEncode(activerunes)
         writefile(DUNGEON_RUNES_FILE, encoded)
-        print("✅ Runas da dungeon salvas no arquivo persistente!")
+        print("Runas da dungeon salvas no arquivo persistente!")
     end)
     
     if not success then
-        warn("❌ Erro ao salvar runas da dungeon:", err)
+        warn("Erro ao salvar runas da dungeon:", err)
     end
 end
 
@@ -131,7 +121,7 @@ local function LoadDungeonRunes()
     if not readfile or not isfile then return false end
     
     if not isfile(DUNGEON_RUNES_FILE) then
-        print("📁 Nenhum arquivo de runas da dungeon encontrado")
+        print("Nenhum arquivo de runas da dungeon encontrado")
         return false
     end
     
@@ -139,21 +129,21 @@ local function LoadDungeonRunes()
         local data = readfile(DUNGEON_RUNES_FILE)
         local decoded = HttpService:JSONDecode(data)
         
-        print("🔮 Carregando runas salvas da dungeon...")
+        print("Carregando runas salvas da dungeon...")
         
         for slotKey, runeName in pairs(decoded) do
             local slotNum = tonumber(string.match(slotKey, "Slot(%d+)"))
             if slotNum then
                 Settings["RuneSlot" .. slotNum] = runeName
-                print("  ✅ Slot " .. slotNum .. ": " .. runeName)
+                print("  Slot " .. slotNum .. ": " .. runeName)
             end
         end
         
-        print("✅ Runas da dungeon carregadas com sucesso!")
+        print("Runas da dungeon carregadas com sucesso!")
     end)
     
     if not success then
-        warn("❌ Erro ao carregar runas da dungeon:", err)
+        warn("Erro ao carregar runas da dungeon:", err)
         return false
     end
     
@@ -165,23 +155,17 @@ local function ClearDungeonRunes()
     
     if isfile(DUNGEON_RUNES_FILE) then
         delfile(DUNGEON_RUNES_FILE)
-        print("🗑️ Arquivo de runas da dungeon limpo!")
+        print("Arquivo de runas da dungeon limpo!")
     end
 end
 
 -- CARREGAR RUNAS DA DUNGEON SE EXISTIR (PRIORIDADE MÁXIMA)
 if LoadDungeonRunes() then
-    print("🔄 Runas da dungeon restauradas do arquivo persistente!")
+    print("Runas da dungeon restauradas do arquivo persistente!")
 end
 
--- =====================================================
--- CONFIG (USA SETTINGS)
--- =====================================================
 Config = Settings
 
--- =====================================================
--- NOTIFICATION
--- =====================================================
 local lastNotificationTime = 0
 local notificationCooldown = 10
 local currentTime = tick()
@@ -195,9 +179,6 @@ if currentTime - lastNotificationTime >= notificationCooldown then
     lastNotificationTime = currentTime
 end
 
--- =====================================================
--- BRIDGENET2
--- =====================================================
 local BridgeNet2 = require(ReplicatedStorage:WaitForChild("BridgeNet2"))
 local DungeonBridge = BridgeNet2.ReferenceBridge("GENERAL_EVENT")
 
@@ -239,82 +220,60 @@ local function SafeFire(payload)
     end
 end
 
--- =====================================================
--- FLUENT UI
--- =====================================================
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-
-local Window = Fluent:CreateWindow({
-    Title = "Allan Hub",
-    SubTitle = "By Allan",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(560, 440),
-    Acrylic = true,
-    Theme = "dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
-})
-
-SaveManager:SetLibrary(Fluent)
-SaveManager:SetFolder("AllanHub")
-
--- =====================================================
--- TABS
--- =====================================================
-local Tabs = {
-    Dungeon = Window:AddTab({ Title = "Dungeon", Icon = "swords" }),
-    Castle  = Window:AddTab({ Title = "Castelo Infernal", Icon = "flame" }),
-    Islands = Window:AddTab({ Title = "Islands", Icon = "map" }),
-    Shop    = Window:AddTab({ Title = "Shop", Icon = "shopping-bag" }),
-    Settings= Window:AddTab({ Title = "Settings", Icon = "settings" })
-}
-
--- =====================================================
--- BOTÃO MINIMIZE CUSTOMIZADO
--- =====================================================
-local playerGui = Player:WaitForChild("PlayerGui")
-local existingGui = playerGui:FindFirstChild("CustomScreenGui")
-if existingGui then
-    existingGui:Destroy()
+-- Proteger UI de ser deletada
+local function ProtectUI()
+    local success = pcall(function()
+        if gethui then
+            return gethui()
+        elseif syn and syn.protect_gui then
+            syn.protect_gui(CoreGui)
+        end
+    end)
 end
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "CustomScreenGui"
-ScreenGui.Parent = playerGui
+ProtectUI()
 
-local Button = Instance.new("ImageButton")
-Button.Name = "CustomButton"
-Button.Parent = ScreenGui
-Button.Size = UDim2.new(0, 50, 0, 50)
-Button.Position = UDim2.new(0.015, 0, 0.02, 20)
-Button.BackgroundTransparency = 1
-Button.Image = "rbxassetid://112254107346248"
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"))()
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(1, 0)
-UICorner.Parent = Button
-
-Button.MouseButton1Click:Connect(function()
-    local VirtualInputManager = game:GetService("VirtualInputManager")
-    if VirtualInputManager then
-        task.defer(function()
-            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
-            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
-        end)
-    end
-end)
-
--- =====================================================
--- STATUS
--- =====================================================
-local Status = Tabs.Dungeon:AddParagraph({
-    Title = "Status",
-    Content = "Idle"
+local Main = Library.CreateMain({
+    Desc = " _ng.shinichi"
 })
 
--- =====================================================
--- FLAGS / STATES
--- =====================================================
+local PageDungeon = Main.CreatePage({
+    Page_Name = "Dungeon",
+    Page_Title = "Dungeon System"
+})
+
+local PageCastle = Main.CreatePage({
+    Page_Name = "Castle",
+    Page_Title = "Castelo Infernal"
+})
+
+local PageIslands = Main.CreatePage({
+    Page_Name = "Islands",
+    Page_Title = "Islands"
+})
+
+local PageEvent = Main.CreatePage({
+    Page_Name = "Event",
+    Page_Title = "Infinite Labyrinth"
+})
+
+local PageSettings = Main.CreatePage({
+    Page_Name = "Settings",
+    Page_Title = "Settings"
+})
+local SectionEventMain = PageEvent.CreateSection("Infinite Labyrinth")
+
+local SectionDungeonMain = PageDungeon.CreateSection("Main Settings")
+local SectionDungeonRunes = PageDungeon.CreateSection("Sistema de Runas")
+local SectionCastleMain = PageCastle.CreateSection("Castle Settings")
+local SectionIslandsMain = PageIslands.CreateSection("Islands")
+
+local function UpdateStatus(text)
+    -- Removido para deixar o script mais limpo
+end
+
 local CreatingDungeon = false
 local DungeonRunning = false
 local StartingDungeon = false
@@ -322,9 +281,6 @@ local Rebirthing = false
 local SpawnConfirmTime = 0
 local currentTween = nil
 
--- =====================================================
--- RUNAS (5 SLOTS)
--- =====================================================
 local MAX_RUNE_SLOTS = 5
 local RuneSlots = {}
 for i = 1, MAX_RUNE_SLOTS do RuneSlots[i] = "" end
@@ -339,11 +295,11 @@ local AvailableRunes = {}
 local function ScanRunes()
     table.clear(AvailableRunes)
     if not ItemsInfo then 
-        warn("❌ ItemsInfo não encontrado!")
+        warn("ItemsInfo não encontrado!")
         return 
     end
 
-    print("🔍 Escaneando runas...")
+    print("Escaneando runas...")
     local count = 0
 
     for id, data in pairs(ItemsInfo) do
@@ -361,10 +317,10 @@ local function ScanRunes()
         end
     end
 
-    print("📊 Total de runas:", count)
+    print("Total de runas:", count)
     
     if count == 0 then
-        warn("⚠️ Nenhuma runa detectada!")
+        warn("Nenhuma runa detectada!")
     end
 end
 
@@ -388,7 +344,7 @@ local function RestoreSavedRunes()
                 if rune.Name == savedRuneName then
                     RuneSlots[slot] = rune.Id
                     restoredCount = restoredCount + 1
-                    print("✅ Runa Slot " .. slot .. " restaurada: " .. savedRuneName .. " (ID: " .. rune.Id .. ")")
+                    print("Runa Slot " .. slot .. " restaurada: " .. savedRuneName .. " (ID: " .. rune.Id .. ")")
                     break
                 end
             end
@@ -396,7 +352,7 @@ local function RestoreSavedRunes()
     end
     
     if restoredCount > 0 then
-        print("🔮 Total de " .. restoredCount .. " runas restauradas das configurações salvas!")
+        print("Total de " .. restoredCount .. " runas restauradas das configurações salvas!")
     end
     
     return restoredCount
@@ -405,144 +361,101 @@ end
 -- RESTAURAR AS RUNAS APÓS ESCANEAR (agora usa as runas do arquivo persistente)
 RestoreSavedRunes()
 
--- =====================================================
--- UI DUNGEON
--- =====================================================
-Tabs.Dungeon:AddToggle("AutoFarmDungeon", {
+SectionDungeonMain.CreateToggle({
     Title = "Auto Farm Dungeon",
-    Default = Settings.AutoFarm,
-    Flag = "AutoFarmDungeon",
-    Callback = function(v)
-        Settings.AutoFarm = v
-        SaveSettings()
-    end
-})
+    Default = Settings.AutoFarm
+}, function(v)
+    Settings.AutoFarm = v
+    SaveSettings()
+end)
 
-Tabs.Dungeon:AddToggle("AutoBuyTicket", {
+SectionDungeonMain.CreateToggle({
     Title = "Auto Buy Ticket",
-    Default = Settings.AutoBuyTicket,
-    Flag = "AutoBuyTicket",
-    Callback = function(v)
-        Settings.AutoBuyTicket = v
-        SaveSettings()
-    end
-})
+    Default = Settings.AutoBuyTicket
+}, function(v)
+    Settings.AutoBuyTicket = v
+    SaveSettings()
+end)
 
-Tabs.Dungeon:AddDropdown("MoveMode", {
+SectionDungeonMain.CreateDropdown({
     Title = "Movement Mode",
-    Values = { "Tween", "Teleport" },
-    Default = Settings.MoveMode,
-    Flag = "MoveMode",
-    Callback = function(v)
-        Settings.MoveMode = v
-        SaveSettings()
-    end
-})
+    List = { "Tween", "Teleport" },
+    Default = Settings.MoveMode
+}, function(v)
+    Settings.MoveMode = v
+    SaveSettings()
+end)
 
-Tabs.Dungeon:AddToggle("AutoRebirth", {
+SectionDungeonMain.CreateToggle({
     Title = "Auto Rebirth (MAX)",
-    Description = "Faz rebirth automaticamente ao atingir level máximo",
-    Default = Settings.AutoRebirth,
-    Flag = "AutoRebirth",
-    Callback = function(v)
-        Settings.AutoRebirth = v
-        SaveSettings()
-    end
-})
-
--- =====================================================
--- UI RUNAS
--- =====================================================
-Tabs.Dungeon:AddParagraph({
-    Title = "🔮 Sistema de Runas",
-    Content = "Runas detectadas: " .. #AvailableRunes .. "\nSelecione até 5 runas abaixo"
-})
+    Desc = "Faz rebirth automaticamente ao atingir level máximo",
+    Default = Settings.AutoRebirth
+}, function(v)
+    Settings.AutoRebirth = v
+    SaveSettings()
+end)
 
 for slot = 1, MAX_RUNE_SLOTS do
-    Tabs.Dungeon:AddDropdown("RuneSlot" .. slot, {
-        Title = "🔮 Runa Slot " .. slot,
-        Values = RuneNames,
-        Default = Settings["RuneSlot" .. slot],
-        Flag = "RuneSlot" .. slot,
-        Callback = function(v)
-            Settings["RuneSlot" .. slot] = v
-            
-            if v == "Nenhuma" then
-                RuneSlots[slot] = ""
-            else
-                for _, r in ipairs(AvailableRunes) do
-                    if r.Name == v then
-                        RuneSlots[slot] = r.Id
-                        print("✅ Slot " .. slot .. " configurado: " .. v .. " (ID: " .. r.Id .. ")")
-                        break
-                    end
+    SectionDungeonRunes.CreateDropdown({
+        Title = "Runa Slot " .. slot,
+        List = RuneNames,
+        Default = Settings["RuneSlot" .. slot]
+    }, function(v)
+        Settings["RuneSlot" .. slot] = v
+        
+        if v == "Nenhuma" then
+            RuneSlots[slot] = ""
+        else
+            for _, r in ipairs(AvailableRunes) do
+                if r.Name == v then
+                    RuneSlots[slot] = r.Id
+                    print("Slot " .. slot .. " configurado: " .. v .. " (ID: " .. r.Id .. ")")
+                    break
                 end
             end
-            
-            SaveSettings()
-            
-            -- SALVAR NO ARQUIVO PERSISTENTE DE RUNAS DA DUNGEON
-            if Settings.UseRunesAuto then
-                SaveDungeonRunes()
-            end
         end
-    })
-end
-
-Tabs.Dungeon:AddToggle("UseRunesAuto", {
-    Title = "🔮 Usar Runas Automaticamente",
-    Description = "Aplica as runas sempre que criar uma dungeon",
-    Default = Settings.UseRunesAuto,
-    Flag = "UseRunesAuto",
-    Callback = function(v)
-        Settings.UseRunesAuto = v
+        
         SaveSettings()
         
-        if v then
-            -- SALVAR RUNAS NO ARQUIVO PERSISTENTE AO ATIVAR
+        -- SALVAR NO ARQUIVO PERSISTENTE DE RUNAS DA DUNGEON
+        if Settings.UseRunesAuto then
             SaveDungeonRunes()
-            
-            local count = 0
-            for i = 1, MAX_RUNE_SLOTS do
-                if RuneSlots[i] ~= "" then count = count + 1 end
-            end
-            Fluent:Notify({
-                Title = "Runas Automáticas",
-                Content = "Ativado! " .. count .. " runas serão aplicadas",
-                Duration = 4
-            })
-        else
-            -- LIMPAR ARQUIVO PERSISTENTE AO DESATIVAR
-            ClearDungeonRunes()
-            Fluent:Notify({
-                Title = "Runas Automáticas",
-                Content = "Desativado! Arquivo de runas limpo.",
-                Duration = 4
-            })
         end
-    end
-})
+    end)
+end
 
-Tabs.Dungeon:AddButton({
-    Title = "🔄 Reescanear Runas",
-    Description = "Atualiza a lista de runas disponíveis",
-    Callback = function()
-        ScanRunes()
-        RuneNames = {"Nenhuma"}
-        for _, r in ipairs(AvailableRunes) do
-            table.insert(RuneNames, r.Name)
+SectionDungeonRunes.CreateToggle({
+    Title = "Usar Runas Automaticamente",
+    Desc = "Aplica as runas sempre que criar uma dungeon",
+    Default = Settings.UseRunesAuto
+}, function(v)
+    Settings.UseRunesAuto = v
+    SaveSettings()
+    
+    if v then
+        -- SALVAR RUNAS NO ARQUIVO PERSISTENTE AO ATIVAR
+        SaveDungeonRunes()
+        
+        local count = 0
+        for i = 1, MAX_RUNE_SLOTS do
+            if RuneSlots[i] ~= "" then count = count + 1 end
         end
-        Fluent:Notify({
-            Title = "Runas",
-            Content = "Encontradas " .. #AvailableRunes .. " runas!",
-            Duration = 4
+        Library.CreateNoti({
+            Title = "Runas Automáticas",
+            Desc = "Ativado! " .. count .. " runas serão aplicadas",
+            ShowTime = 4
+        })
+    else
+        -- LIMPAR ARQUIVO PERSISTENTE AO DESATIVAR
+        ClearDungeonRunes()
+        Library.CreateNoti({
+            Title = "Runas Automáticas",
+            Desc = "Desativado! Arquivo de runas limpo.",
+            ShowTime = 4
         })
     end
-})
+end)
 
--- =====================================================
--- DUNGEON FUNCTIONS
--- =====================================================
 local EnemiesFolder = workspace.__Main.__Enemies.Server
 
 local function GetClosestEnemy()
@@ -610,11 +523,11 @@ local function ApplyRunes()
     -- PEGAR ID DA DUNGEON
     local dungeonId = GetPlayerDungeonId()
     if not dungeonId then
-        print("❌ ID da dungeon não encontrado - não é possível adicionar runas")
+        print("ID da dungeon não encontrado - não é possível adicionar runas")
         return 0
     end
     
-    print("🔑 ID da Dungeon detectado:", dungeonId)
+    print("ID da Dungeon detectado:", dungeonId)
     
     local runesApplied = 0
     
@@ -630,7 +543,7 @@ local function ApplyRunes()
                 Item = runeId
             })
             runesApplied = runesApplied + 1
-            print("✅ Aplicando Runa Slot " .. slot .. ": " .. runeId)
+            print("Aplicando Runa Slot " .. slot .. ": " .. runeId)
             task.wait(0.4)
         end
     end
@@ -643,12 +556,12 @@ local function CreateDungeon()
 
     CreatingDungeon = true
     StartingDungeon = true
-    Status:SetDesc("Preparing Dungeon...")
+    UpdateStatus("Preparing Dungeon...")
 
     -- SALVAR RUNAS ANTES DE CRIAR A DUNGEON (caso o jogo recarregue)
     if Settings.UseRunesAuto then
         SaveDungeonRunes()
-        print("💾 Runas salvas antes de criar a dungeon")
+        print("Runas salvas antes de criar a dungeon")
     end
 
     -- Comprar ticket
@@ -658,7 +571,7 @@ local function CreateDungeon()
     end
 
     -- Criar dungeon PRIMEIRO
-    Status:SetDesc("Creating Dungeon...")
+    UpdateStatus("Creating Dungeon...")
     SafeFire({
         Event = "DungeonAction",
         Action = "Create"
@@ -668,17 +581,17 @@ local function CreateDungeon()
 
     -- Aplicar runas DEPOIS de criar (com ID detectado)
     if Settings.UseRunesAuto then
-        Status:SetDesc("Applying Runes...")
+        UpdateStatus("Applying Runes...")
         local runesApplied = ApplyRunes()
         
         if runesApplied > 0 then
-            Status:SetDesc("✨ " .. runesApplied .. " Runas Ready!")
+            UpdateStatus(runesApplied .. " Runas Ready!")
             task.wait(0.5)
         end
     end
 
     -- Iniciar dungeon
-    Status:SetDesc("Starting Dungeon...")
+    UpdateStatus("Starting Dungeon...")
     SafeFire({
         Event = "DungeonAction",
         Action = "Start"
@@ -689,14 +602,11 @@ local function CreateDungeon()
     end)
 end
 
--- =====================================================
--- AUTO DUNGEON LOOP
--- =====================================================
 RunService.Heartbeat:Connect(function(dt)
     if not Settings.AutoFarm or Rebirthing then
         DungeonRunning = false
         SpawnConfirmTime = 0
-        Status:SetDesc("Idle")
+        UpdateStatus("Idle")
         return
     end
 
@@ -706,7 +616,7 @@ RunService.Heartbeat:Connect(function(dt)
         DungeonRunning = true
         StartingDungeon = false
         SpawnConfirmTime = 0
-        Status:SetDesc("Farming (" .. Settings.MoveMode .. ")")
+        UpdateStatus("Farming (" .. Settings.MoveMode .. ")")
         MoveToEnemy(enemy)
         AttackEnemy(enemy)
         return
@@ -714,7 +624,7 @@ RunService.Heartbeat:Connect(function(dt)
 
     if DungeonRunning then
         SpawnConfirmTime += dt
-        Status:SetDesc(("Finalizando Dungeon %.1fs"):format(SpawnConfirmTime))
+        UpdateStatus(("Finalizando Dungeon %.1fs"):format(SpawnConfirmTime))
         if SpawnConfirmTime >= 1.8 then
             DungeonRunning = false
             SpawnConfirmTime = 0
@@ -725,9 +635,6 @@ RunService.Heartbeat:Connect(function(dt)
     end
 end)
 
--- =====================================================
--- LEVEL CHECK (VERIFICAÇÃO DE LEVEL MÁXIMO)
--- =====================================================
 local PlayerGui = Player:WaitForChild("PlayerGui")
 local ExpText = PlayerGui
     :WaitForChild("Hud")
@@ -754,10 +661,51 @@ local function GetLevelInfo()
     return level, false
 end
 
--- =====================================================
--- AUTO REBIRTH
--- =====================================================
 local rebirthCooldown = 0
+
+-- Loop de Stats (PlayerExp a cada 30s)
+task.spawn(function()
+    while true do
+        if Settings.AutoRebirth then
+            SafeFire({
+                Event = "StatsUp",
+                Stats = "PlayerExp",
+                Points = 2000
+            })
+        end
+        task.wait(30)
+    end
+end)
+
+-- Loop de Stats (ShadowRange a cada 40s)
+task.spawn(function()
+    while true do
+        if Settings.AutoRebirth then
+            SafeFire({
+                Event = "StatsUp",
+                Stats = "ShadowRange",
+                Points = 400
+            })
+        end
+        task.wait(40)
+    end
+end)
+
+-- Sistema que simula atividade a cada 10 minutos
+task.spawn(function()
+    while task.wait(600) do -- 600 segundos = 10 minutos
+        VU:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        VU:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        print("Anti-AFK: Atividade simulada")
+    end
+end)
+
+-- Backup: Também detecta quando o Roblox tenta kickar por inatividade
+Player.Idled:Connect(function()
+    VU:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    VU:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    print("Anti-AFK: Kickar prevenido")
+end)
 
 RunService.Heartbeat:Connect(function(dt)
     rebirthCooldown += dt
@@ -769,7 +717,7 @@ RunService.Heartbeat:Connect(function(dt)
     
     -- Só faz rebirth se estiver no level máximo
     if isMax then
-        print("🌟 LEVEL MAX! Fazendo Rebirth...")
+        print("LEVEL MAX! Fazendo Rebirth...")
         Rebirthing = true
         
         SafeFire({
@@ -782,20 +730,41 @@ RunService.Heartbeat:Connect(function(dt)
     end
 end)
 
--- =====================================================
--- CASTLE VARIABLES
--- =====================================================
 local castleInfEnabled = false
 local autoCastleEnabled = false
 local castleCreateOnlyEnabled = false
 local entryFloor = Settings.EntryFloor
 local resetFloor = Settings.ResetFloor
 local selectedCastleSpeed = Settings.CastleSpeed
+
+-- AUTO F2 + F3
+local autoF2F3Enabled = false
+local f2f3Mode = "8x"
+local F2F3_INTERVALS = {
+    ["1x"] = 60,    -- 1 minuto normal
+    ["4x"] = 15,    -- 1 minuto acelerado 4x (60/4)
+    ["8x"] = 7.5    -- 1 minuto acelerado 8x (60/8)
+}
+local DELAY_F2_F3 = 1.5
 local castleSpeedEnabled = Settings.CastleSpeedEnabled
 
--- =====================================================
--- CASTLE FUNCTIONS
--- =====================================================
+local function pressKey(key)
+    VIM:SendKeyEvent(true, key, false, game)
+    task.wait(0.05)
+    VIM:SendKeyEvent(false, key, false, game)
+end
+
+local function autoF2F3Loop()
+    task.spawn(function()
+        while autoF2F3Enabled do
+            pressKey(Enum.KeyCode.F2)
+            task.wait(DELAY_F2_F3)
+            pressKey(Enum.KeyCode.F3)
+            task.wait(F2F3_INTERVALS[f2f3Mode])
+        end
+    end)
+end
+
 local function getCurrentCastleFloor()
     local main = workspace:FindFirstChild("__Main")
     if not main then return nil end
@@ -930,9 +899,6 @@ local function farmCastleMobs()
     return mobsKilled
 end
 
--- =====================================================
--- CASTLE LOOPS
--- =====================================================
 local function castleInfLoop()
     task.spawn(function()
         while castleInfEnabled do
@@ -996,109 +962,122 @@ end
 -- =====================================================
 -- CASTLE UI
 -- =====================================================
-Tabs.Castle:AddInput("EntryFloor", {
+SectionCastleMain.CreateBox({
     Title = "Andar de Entrada",
+    Placeholder = "Digite o andar",
     Default = tostring(Settings.EntryFloor),
-    Numeric = true,
-    Finished = true,
-    Callback = function(v)
-        local n = tonumber(v)
-        if n then
-            entryFloor = n
-            Settings.EntryFloor = n
-            SaveSettings()
-        end
+    Number = true
+}, function(v)
+    local n = tonumber(v)
+    if n then
+        entryFloor = n
+        Settings.EntryFloor = n
+        SaveSettings()
     end
-})
+end)
 
-Tabs.Castle:AddInput("ResetFloor", {
+SectionCastleMain.CreateBox({
     Title = "Andar de Reset",
+    Placeholder = "Digite o andar",
     Default = tostring(Settings.ResetFloor),
-    Numeric = true,
-    Finished = true,
-    Callback = function(v)
-        local n = tonumber(v)
-        if n then
-            resetFloor = n
-            Settings.ResetFloor = n
-            SaveSettings()
-        end
+    Number = true
+}, function(v)
+    local n = tonumber(v)
+    if n then
+        resetFloor = n
+        Settings.ResetFloor = n
+        SaveSettings()
     end
-})
+end)
 
-Tabs.Castle:AddToggle("CastleINF", {
+SectionCastleMain.CreateToggle({
     Title = "Castle INF (Farm + Portal)",
-    Default = Settings.CastleInf,
-    Callback = function(v)
-        castleInfEnabled = v
-        Settings.CastleInf = v
-        SaveSettings()
-        if v then castleInfLoop() end
-    end
-})
+    Default = Settings.CastleInf
+}, function(v)
+    castleInfEnabled = v
+    Settings.CastleInf = v
+    SaveSettings()
+    if v then castleInfLoop() end
+end)
 
-Tabs.Castle:AddToggle("AutoCastle", {
+SectionCastleMain.CreateToggle({
     Title = "Auto Castle (Create + Reset)",
-    Default = Settings.AutoCastle,
-    Callback = function(v)
-        autoCastleEnabled = v
-        Settings.AutoCastle = v
-        SaveSettings()
-        if v then autoCastleLoop() end
-    end
-})
+    Default = Settings.AutoCastle
+}, function(v)
+    autoCastleEnabled = v
+    Settings.AutoCastle = v
+    SaveSettings()
+    if v then autoCastleLoop() end
+end)
 
-Tabs.Castle:AddToggle("CastleCreateOnly", {
+SectionCastleMain.CreateToggle({
     Title = "Auto Castle (Criar Apenas)",
-    Default = Settings.CastleCreateOnly,
-    Callback = function(v)
-        castleCreateOnlyEnabled = v
-        Settings.CastleCreateOnly = v
-        SaveSettings()
-        if v then castleCreateOnlyLoop() end
-    end
-})
+    Default = Settings.CastleCreateOnly
+}, function(v)
+    castleCreateOnlyEnabled = v
+    Settings.CastleCreateOnly = v
+    SaveSettings()
+    if v then castleCreateOnlyLoop() end
+end)
 
-Tabs.Castle:AddDropdown("CastleSpeed", {
+SectionCastleMain.CreateDropdown({
     Title = "Speed do Castelo",
-    Values = {"1", "2", "4"},
-    Default = Settings.CastleSpeed,
-    Callback = function(v)
-        selectedCastleSpeed = v
-        Settings.CastleSpeed = v
-        SaveSettings()
-        
-        if castleSpeedEnabled then
-            SafeFire({
-                Event = "CastleAction",
-                Action = "SpeedUp",
-                Speed = tonumber(v)
-            })
-        end
+    List = {"1", "2", "4"},
+    Default = Settings.CastleSpeed
+}, function(v)
+    selectedCastleSpeed = v
+    Settings.CastleSpeed = v
+    SaveSettings()
+    
+    if castleSpeedEnabled then
+        SafeFire({
+            Event = "CastleAction",
+            Action = "SpeedUp",
+            Speed = tonumber(v)
+        })
     end
-})
+end)
 
-Tabs.Castle:AddToggle("EnableCastleSpeed", {
+SectionCastleMain.CreateToggle({
     Title = "Ativar Speed do Castelo",
-    Default = Settings.CastleSpeedEnabled,
-    Callback = function(v)
-        castleSpeedEnabled = v
-        Settings.CastleSpeedEnabled = v
-        SaveSettings()
-        
-        if v then
-            SafeFire({
-                Event = "CastleAction",
-                Action = "SpeedUp",
-                Speed = tonumber(selectedCastleSpeed)
-            })
-        end
+    Default = Settings.CastleSpeedEnabled
+}, function(v)
+    castleSpeedEnabled = v
+    Settings.CastleSpeedEnabled = v
+    SaveSettings()
+    
+    if v then
+        SafeFire({
+            Event = "CastleAction",
+            Action = "SpeedUp",
+            Speed = tonumber(selectedCastleSpeed)
+        })
     end
-})
+end)
 
--- =====================================================
--- ISLANDS
--- =====================================================
+SectionCastleMain.CreateDropdown({
+    Title = "Modo Auto F2 + F3",
+    List = {"1x", "4x", "8x"},
+    Default = "8x"
+}, function(v)
+    f2f3Mode = v
+end)
+
+SectionCastleMain.CreateToggle({
+    Title = "Ativar Auto F2 + F3",
+    Desc = "Pressiona F2 e F3 automaticamente"
+}, function(v)
+    autoF2F3Enabled = v
+    if v then
+        autoF2F3Loop()
+        Library.CreateNoti({
+            Title = "Auto F2+F3",
+            Desc = "Ativado no modo " .. f2f3Mode,
+            ShowTime = 3
+        })
+    end
+end)
+
 local SelectedIslandName = nil
 local IslandMap = {}
 local function GetWorld()
@@ -1141,364 +1120,260 @@ elseif islandModel:IsA("BasePart") then
 hrp.CFrame = islandModel.CFrame * CFrame.new(0, 10, 0)
 end
 end
-local IslandDropdown = Tabs.Islands:AddDropdown("IslandDropdown", {
-Title = "Ilhas Detectadas",
-Values = ScanIslands(),
-Multi = false,
-Callback = function(value)
-SelectedIslandName = value
-end
-})
-Tabs.Islands:AddButton({
-Title = "Teleportar Ilha Selecionada",
-Description = "Vai para a ilha escolhida no dropdown",
-Callback = function()
-if not SelectedIslandName then
-Fluent:Notify({
-Title = "Erro",
-Content = "Nenhuma ilha selecionada",
-Duration = 3
-})
-return
-end
-local islandModel = IslandMap[SelectedIslandName]
-if islandModel then
-TeleportToIsland(islandModel)
-Fluent:Notify({
-Title = "Teleport",
-Content = "Você foi para " .. SelectedIslandName,
-Duration = 3
-})
-end
-end
-})
--- Atualização automática do dropdown
-task.spawn(function()
-while task.wait(6) do
-if IslandDropdown then
-IslandDropdown:SetValues(ScanIslands())
-end
-end
+SectionIslandsMain.CreateDropdown({
+    Title = "Ilhas Detectadas",
+    List = ScanIslands()
+}, function(value)
+    SelectedIslandName = value
 end)
 
--- =====================================================
--- SHOP - RUNE AUTO BUY
--- =====================================================
-local ShopInfo = require(ReplicatedStorage.Indexer.ShopInfo)
-
--- Ticket System (background)
-local leaderstats = Player:WaitForChild("leaderstats")
-local inventory = leaderstats:WaitForChild("Inventory")
-local items = inventory:WaitForChild("Items")
-local ticket = items:WaitForChild("Ticket")
-
-local function GetTicketAmount()
-    return ticket:GetAttribute("Amount") or 0
-end
-
--- Safe Fire Server
-local function SafeFireShop(...)
-    local args = {...}
-    
-    local success, err = pcall(function()
-        ReplicatedStorage.BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
-    end)
-    
-    if not success then
-        warn("[Shop] Erro ao enviar dados:", err)
+SectionIslandsMain.CreateButton({
+    Title = "Teleportar Ilha Selecionada"
+}, function()
+    if not SelectedIslandName then
+        Library.CreateNoti({
+            Title = "Erro",
+            Desc = "Nenhuma ilha selecionada",
+            ShowTime = 3
+        })
+        return
     end
-    
-    return success
-end
-
--- Shop Data
-local shopData = ShopInfo.RuneShop
-local selectedRunesToBuy = {}
-
-if shopData and shopData.Items then
-    local runeItems = {}
-    for itemName in pairs(shopData.Items) do
-        table.insert(runeItems, itemName)
+    local islandModel = IslandMap[SelectedIslandName]
+    if islandModel then
+        TeleportToIsland(islandModel)
+        Library.CreateNoti({
+            Title = "Teleport",
+            Desc = "Você foi para " .. SelectedIslandName,
+            ShowTime = 3
+        })
     end
-    table.sort(runeItems)
+end)
+
+-- Infinite Labyrinth
+local selectedLabyrinthFloor = "180"
+local selectedLabyrinthSpeed = "3"
+local autoLabyrinthEnabled = false
+local creatingLabyrinth = false
+
+-- Função para verificar se está dentro do labirinto infinito
+local function IsInsideLabyrinth()
+    local infos = ReplicatedStorage:FindFirstChild("__Infos")
+    if not infos then return false end
     
-    -- Tickets Display
-    local ticketInfo = Tabs.Shop:AddParagraph({
-        Title = "🎫 Tickets Disponíveis",
-        Content = "Carregando..."
-    })
+    local labyrinth = infos:FindFirstChild("__InfiniteLabyrinth")
+    if not labyrinth then return false end
     
-    task.spawn(function()
-        while true do
-            local amount = GetTicketAmount()
-            ticketInfo:SetDesc(string.format("💰 Você tem: %s tickets", amount))
-            task.wait(1)
-        end
-    end)
-    
-    Tabs.Shop:AddSection("Seleção de Runas")
-    
-    -- Carregar runas selecionadas salvas
-    if Settings.SelectedShopRunes and type(Settings.SelectedShopRunes) == "table" then
-        selectedRunesToBuy = Settings.SelectedShopRunes
-    end
-    
-    -- Dropdown Runas
-    Tabs.Shop:AddDropdown("RuneShopItems", {
-        Title = "🔮 Selecionar Runas",
-        Values = runeItems,
-        Multi = true,
-        Default = Settings.SelectedShopRunes or {},
-        Callback = function(Value)
-            selectedRunesToBuy = Value
-            Settings.SelectedShopRunes = Value
-            SaveSettings()
-        end
-    })
-    
-    -- Info Runas Selecionadas
-    local runeInfo = Tabs.Shop:AddParagraph({
-        Title = "Runas Selecionadas",
-        Content = "Nenhuma runa selecionada."
-    })
-    
-    task.spawn(function()
-        while true do
-            local text = ""
-            for itemName, enabled in pairs(selectedRunesToBuy) do
-                if enabled then
-                    local item = shopData.Items[itemName]
-                    local price = item.Price or "?"
-                    local priceType = item.PriceType or ""
-                    text = text .. string.format(
-                        "💎 %s - 💰 %s %s\n",
-                        itemName,
-                        price,
-                        priceType
-                    )
-                end
-            end
-            runeInfo:SetDesc(text ~= "" and text or "Nenhuma runa selecionada.")
-            task.wait(0.5)
-        end
-    end)
-    
-    Tabs.Shop:AddSection("Compra")
-    
-    -- Toggle Auto Compra
-    Tabs.Shop:AddToggle("AutoBuyRunes", {
-        Title = "🔄 Auto Compra de Runas",
-        Description = "Compra automaticamente quando tiver tickets suficientes",
-        Default = Settings.AutoBuyRunes,
-        Callback = function(Value)
-            Settings.AutoBuyRunes = Value
-            SaveSettings()
-        end
-    })
-    
-    -- Loop Auto Compra (background)
-    task.spawn(function()
-        while true do
-            if Settings.AutoBuyRunes then
-                local tickets = GetTicketAmount()
-                
-                for itemName, enabled in pairs(selectedRunesToBuy) do
-                    if enabled then
-                        local item = shopData.Items[itemName]
-                        local price = item.Price or 0
+    -- Verificar se o player é o líder do labirinto
+    for _, lab in ipairs(labyrinth:GetChildren()) do
+        local leader = lab:GetAttribute("Leader")
+        if leader == Player.UserId then
+            return true")
                         
-                        if tickets >= price then
-                            SafeFireShop(
-                                {
-                                    {
-                                        ["Shop"] = "RuneShop",
-                                        ["Action"] = "Buy",
-                                        ["Amount"] = 1,
-                                        ["Item"] = itemName,
-                                        ["Event"] = "ItemShopAction",
-                                        ["Rank"] = 1
-                                    },
-                                    "\4"
-                                }
-                            )
-                            task.wait(0.3)
-                            tickets = GetTicketAmount()
+                        -- Aguardar um pouco antes de recriar
+                        task.wait(3)
+                        
+                        -- Verificar se ainda não está dentro de uma dungeon antes de recriar
+                        if autoLabyrinthEnabled and not creatingLabyrinth and not IsInsideLabyrinth() then
+                            creatingLabyrinth = true
+                            
+                            print("Recriando labirinto...")
+                            
+                            -- Criar labirinto
+                            SafeFire({
+                                Event = "InfiniteLabyrinthAction",
+                                Action = "Create"
+                            })
+                            
+                            task.wait(2)
+                            
+                            -- Iniciar labirinto
+                            SafeFire({
+                                Dungeon = Player.UserId,
+                                Check = selectedLabyrinthFloor,
+                                Event = "InfiniteLabyrinthAction",
+                                Action = "Start"
+                            })
+                            
+                            print("Labirinto recriado e iniciado automaticamente no andar " .. selectedLabyrinthFloor)
+                            
+                            creatingLabyrinth = false
+                        else
+                            print("Já está dentro de um labirinto, não recriando.")
+                            -- Criar labirinto
+                            SafeFire({
+                                Event = "InfiniteLabyrinthAction",
+                                Action = "Create"
+                            })
+                            
+                            task.wait(2)
+                            
+                            -- Iniciar labirinto
+                            SafeFire({
+                                Dungeon = Player.UserId,
+                                Check = selectedLabyrinthFloor,
+                                Event = "InfiniteLabyrinthAction",
+                                Action = "Start"
+                            })
+                            
+                            print("Labirinto recriado e iniciado automaticamente no andar " .. selectedLabyrinthFloor)
+                            
+                            creatingLabyrinth = false
                         end
                     end
                 end
             end
-            task.wait(0.5)
         end
-    end)
-    
-    -- =====================================================
-    -- LEVEL SKIP SYSTEM
-    -- =====================================================
-    Tabs.Shop:AddSection("Auto Pass")
-    
-    -- Toggle Auto Compra +1 Nível
-    Tabs.Shop:AddToggle("AutoBuyLevelSkip1", {
-        Title = "Lvl Pass 1",
-        Description = "Compra automaticamente quando tiver 99+ tickets",
-        Default = Settings.AutoBuyLevelSkip1,
-        Callback = function(Value)
-            Settings.AutoBuyLevelSkip1 = Value
-            SaveSettings()
-        end
-    })
-    
-    -- Toggle Auto Compra +10 Níveis
-    Tabs.Shop:AddToggle("AutoBuyLevelSkip10", {
-        Title = "Lvl Pass 10",
-        Description = "Compra automaticamente quando tiver 999+ tickets",
-        Default = Settings.AutoBuyLevelSkip10,
-        Callback = function(Value)
-            Settings.AutoBuyLevelSkip10 = Value
-            SaveSettings()
-        end
-    })
-    
-    -- Loop Auto Compra +1 Nível (background)
-    task.spawn(function()
-        while true do
-            if Settings.AutoBuyLevelSkip1 then
-                local tickets = GetTicketAmount()
-                
-                if tickets >= 99 then
-                    SafeFireShop(
-                        {
-                            {
-                                ["SubType"] = "Products",
-                                ["Type"] = "Product",
-                                ["Event"] = "TicketShop",
-                                ["Name"] = "Skip1Level"
-                            },
-                            "\4"
-                        }
-                    )
-                    task.wait(0.5)
-                end
-            end
-            task.wait(0.5)
-        end
-    end)
-    
-    -- Loop Auto Compra +10 Níveis (background)
-    task.spawn(function()
-        while true do
-            if Settings.AutoBuyLevelSkip10 then
-                local tickets = GetTicketAmount()
-                
-                if tickets >= 999 then
-                    SafeFireShop(
-                        {
-                            {
-                                ["SubType"] = "Products",
-                                ["Type"] = "Product",
-                                ["Event"] = "TicketShop",
-                                ["Name"] = "Skip2Level"
-                            },
-                            "\4"
-                        }
-                    )
-                    task.wait(0.5)
-                end
-            end
-            task.wait(0.5)
-        end
-    end)
-else
-    Tabs.Shop:AddParagraph({
-        Title = "❌ Erro",
-        Content = "Rune Shop não encontrada no ShopInfo"
-    })
+    end
+end)
+
+-- Gerar lista de andares de 1 até 360 (de 30 em 30)
+local function GenerateFloorList()
+    local floors = {}
+    for i = 1, 360, 30 do
+        table.insert(floors, tostring(i))
+    end
+    return floors
 end
 
--- =====================================================
--- SETTINGS
--- =====================================================
-SaveManager:BuildConfigSection(Tabs.Settings)
+SectionEventMain.CreateDropdown({
+    Title = "Selecionar Andar",
+    List = GenerateFloorList(),
+    Default = "180"
+}, function(v)
+    selectedLabyrinthFloor = v
+end)
 
-Tabs.Settings:AddParagraph({
-    Title = "💾 Sistema de Salvamento",
-    Content = "Suas configurações são salvas automaticamente!"
-})
+SectionEventMain.CreateDropdown({
+    Title = "Selecionar Speed",
+    List = {"1", "3", "6"},
+    Default = "3"
+}, function(v)
+    selectedLabyrinthSpeed = v
+end)
 
-Tabs.Settings:AddButton({
-    Title = "💾 Salvar Configurações",
-    Description = "Salva manualmente todas as configurações",
-    Callback = function()
-        SaveSettings()
-        Fluent:Notify({
-            Title = "Salvamento",
-            Content = "Configurações salvas com sucesso!",
-            Duration = 3
-        })
+SectionEventMain.CreateButton({
+    Title = "Ativar Speed"
+}, function()
+    SafeFire({
+        Speed = tonumber(selectedLabyrinthSpeed),
+        Event = "InfiniteLabyrinthAction",
+        Action = "SpeedUp"
+    })
+    
+    Library.CreateNoti({
+        Title = "Speed Labirinto",
+        Desc = "Velocidade definida para x" .. selectedLabyrinthSpeed,
+        ShowTime = 3
+    })
+end)
+
+SectionEventMain.CreateToggle({
+    Title = "Auto Criar e Iniciar",
+    Desc = "Cria e inicia automaticamente (sem speed)"
+}, function(v)
+    autoLabyrinthEnabled = v
+    
+    if v then
+        task.spawn(function()
+            -- Criar labirinto
+            SafeFire({
+                Event = "InfiniteLabyrinthAction",
+                Action = "Create"
+            })
+            
+            task.wait(2)
+            
+            -- Iniciar labirinto
+            SafeFire({
+                Dungeon = Player.UserId,
+                Check = selectedLabyrinthFloor,
+                Event = "InfiniteLabyrinthAction",
+                Action = "Start"
+            })
+            
+            Library.CreateNoti({
+                Title = "Auto Labirinto",
+                Desc = "Labirinto criado e iniciado no andar " .. selectedLabyrinthFloor .. "\nAtivar speed manualmente!",
+                ShowTime = 4
+            })
+        end)
     end
+end)
+
+local SectionSettings = PageSettings.CreateSection("Config")
+
+SectionSettings.CreateLabel({
+    Title = "Sistema de Salvamento\nSuas configurações são salvas automaticamente!"
 })
 
-Tabs.Settings:AddButton({
-    Title = "🔄 Recarregar Configurações",
-    Description = "Recarrega as configurações do arquivo",
-    Callback = function()
-        LoadSettings()
-        Fluent:Notify({
-            Title = "Salvamento",
-            Content = "Configurações recarregadas!",
-            Duration = 3
-        })
+SectionSettings.CreateButton({
+    Title = "Salvar Configurações"
+}, function()
+    SaveSettings()
+    Library.CreateNoti({
+        Title = "Salvamento",
+        Desc = "Configurações salvas com sucesso!",
+        ShowTime = 3
+    })
+end)
+
+SectionSettings.CreateButton({
+    Title = "Recarregar Configurações"
+}, function()
+    LoadSettings()
+    Library.CreateNoti({
+        Title = "Salvamento",
+        Desc = "Configurações recarregadas!",
+        ShowTime = 3
+    })
+end)
+
+SectionSettings.CreateButton({
+    Title = "Resetar Todas Configurações"
+}, function()
+    if delfile and isfile(SETTINGS_FILE) then
+        delfile(SETTINGS_FILE)
     end
-})
-
-Tabs.Settings:AddButton({
-    Title = "🗑️ Resetar Todas Configurações",
-    Description = "Volta para os valores padrão",
-    Callback = function()
-        if delfile and isfile(SETTINGS_FILE) then
-            delfile(SETTINGS_FILE)
+    
+    for key in pairs(Settings) do
+        if key:find("RuneSlot") then
+            Settings[key] = "Nenhuma"
+        elseif type(Settings[key]) == "boolean" then
+            Settings[key] = false
+        elseif key == "MoveMode" then
+            Settings[key] = "Tween"
+        elseif key == "CastleSpeed" then
+            Settings[key] = "1"
+        elseif key == "EntryFloor" then
+            Settings[key] = 1
+        elseif key == "ResetFloor" then
+            Settings[key] = 100
         end
-        
-        for key in pairs(Settings) do
-            if key:find("RuneSlot") then
-                Settings[key] = "Nenhuma"
-            elseif type(Settings[key]) == "boolean" then
-                Settings[key] = false
-            elseif key == "MoveMode" then
-                Settings[key] = "Tween"
-            elseif key == "CastleSpeed" then
-                Settings[key] = "1"
-            elseif key == "EntryFloor" then
-                Settings[key] = 1
-            elseif key == "ResetFloor" then
-                Settings[key] = 100
-            end
-        end
-        
-        SaveSettings()
-        
-        Fluent:Notify({
-            Title = "Resetado",
-            Content = "Configurações resetadas com sucesso!",
-            Duration = 3
-        })
     end
+    
+    SaveSettings()
+    
+    Library.CreateNoti({
+        Title = "Resetado",
+        Desc = "Configurações resetadas com sucesso!",
+        ShowTime = 3
+    })
+end)
+
+SectionSettings.CreateButton({
+    Title = "Reconectar Servidor"
+}, function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId, Player)
+end)
+
+Library.CreateNoti({
+    Title = "Allan Hub V2",
+    Desc = "Script carregado com sucesso!\nSistema de salvamento ativo\nRunas detectadas: " .. #AvailableRunes,
+    ShowTime = 6
 })
 
-Tabs.Settings:AddButton({
-    Title = "🔄 Reconectar Servidor",
-    Description = "Reconecta ao servidor atual",
-    Callback = function()
-        game:GetService("TeleportService"):Teleport(game.PlaceId, Player)
-    end
-})
-
--- =====================================================
--- NOTIFICAÇÃO FINAL
--- =====================================================
-Fluent:Notify({
-    Title = "Allan Hub ",
-    Content = "Script carregado com sucesso! 🎉",
-    Duration = 6
-})
-
-print("✅ ALLAN HUB CARREGADO")
+print("ALLAN HUB V2 CARREGADO")
+print("Sistema de salvamento: ATIVO")
+print("Runas detectadas: " .. #AvailableRunes)
+print("Detecção automática de ID da dungeon: ATIVO")
+print("Todas as configurações serão salvas automaticamente!")
