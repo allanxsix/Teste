@@ -1236,6 +1236,10 @@ end
 -- Monitorar saída do labirinto
 local function monitorarSaidaLabirinto()
     task.spawn(function()
+        -- Período de graça de 15 segundos após entrar (evita falsos positivos por lag)
+        print("[Labirinto] Iniciando monitoramento (15s de período de graça)...")
+        task.wait(15)
+        
         local tentativasConsecutivas = 0
         local maxTentativas = 3
         
