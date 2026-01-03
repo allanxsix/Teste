@@ -4,9 +4,6 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
--- =====================================================
--- SERVICES
--- =====================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -98,9 +95,6 @@ end
 
 LoadSettings()
 
--- =====================================================
--- SISTEMA DE RUNAS DA DUNGEON (PERSISTENTE)
--- =====================================================
 local function SaveDungeonRunes()
     if not writefile then return end
     
@@ -170,14 +164,8 @@ if LoadDungeonRunes() then
     print("Runas da dungeon restauradas do arquivo persistente!")
 end
 
--- =====================================================
--- CONFIG (USA SETTINGS)
--- =====================================================
 Config = Settings
 
--- =====================================================
--- NOTIFICATION
--- =====================================================
 local lastNotificationTime = 0
 local notificationCooldown = 10
 local currentTime = tick()
@@ -191,9 +179,6 @@ if currentTime - lastNotificationTime >= notificationCooldown then
     lastNotificationTime = currentTime
 end
 
--- =====================================================
--- BRIDGENET2
--- =====================================================
 local BridgeNet2 = require(ReplicatedStorage:WaitForChild("BridgeNet2"))
 local DungeonBridge = BridgeNet2.ReferenceBridge("GENERAL_EVENT")
 
@@ -235,18 +220,12 @@ local function SafeFire(payload)
     end
 end
 
--- =====================================================
--- NOVA UI (GITHUB)
--- =====================================================
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"))()
 
 local Main = Library.CreateMain({
     Desc = " _ng.shinichi"
 })
 
--- =====================================================
--- PAGES
--- =====================================================
 local PageDungeon = Main.CreatePage({
     Page_Name = "Dungeon",
     Page_Title = "Dungeon System"
@@ -267,9 +246,6 @@ local PageSettings = Main.CreatePage({
     Page_Title = "Settings"
 })
 
--- =====================================================
--- SECTIONS
--- =====================================================
 local SectionDungeonMain = PageDungeon.CreateSection("Main Settings")
 local SectionDungeonRunes = PageDungeon.CreateSection("Sistema de Runas")
 local SectionCastleMain = PageCastle.CreateSection("Castle Settings")
@@ -279,9 +255,6 @@ local function UpdateStatus(text)
     -- Removido para deixar o script mais limpo
 end
 
--- =====================================================
--- FLAGS / STATES
--- =====================================================
 local CreatingDungeon = false
 local DungeonRunning = false
 local StartingDungeon = false
@@ -289,9 +262,6 @@ local Rebirthing = false
 local SpawnConfirmTime = 0
 local currentTween = nil
 
--- =====================================================
--- RUNAS (5 SLOTS)
--- =====================================================
 local MAX_RUNE_SLOTS = 5
 local RuneSlots = {}
 for i = 1, MAX_RUNE_SLOTS do RuneSlots[i] = "" end
@@ -372,9 +342,6 @@ end
 -- RESTAURAR AS RUNAS APÓS ESCANEAR (agora usa as runas do arquivo persistente)
 RestoreSavedRunes()
 
--- =====================================================
--- UI DUNGEON
--- =====================================================
 SectionDungeonMain.CreateToggle({
     Title = "Auto Farm Dungeon",
     Default = Settings.AutoFarm
@@ -409,9 +376,6 @@ SectionDungeonMain.CreateToggle({
     SaveSettings()
 end)
 
--- =====================================================
--- UI RUNAS
--- =====================================================
 for slot = 1, MAX_RUNE_SLOTS do
     SectionDungeonRunes.CreateDropdown({
         Title = "Runa Slot " .. slot,
@@ -473,9 +437,6 @@ SectionDungeonRunes.CreateToggle({
     end
 end)
 
--- =====================================================
--- DUNGEON FUNCTIONS
--- =====================================================
 local EnemiesFolder = workspace.__Main.__Enemies.Server
 
 local function GetClosestEnemy()
@@ -622,9 +583,6 @@ local function CreateDungeon()
     end)
 end
 
--- =====================================================
--- AUTO DUNGEON LOOP
--- =====================================================
 RunService.Heartbeat:Connect(function(dt)
     if not Settings.AutoFarm or Rebirthing then
         DungeonRunning = false
@@ -658,9 +616,6 @@ RunService.Heartbeat:Connect(function(dt)
     end
 end)
 
--- =====================================================
--- LEVEL CHECK (VERIFICAÇÃO DE LEVEL MÁXIMO)
--- =====================================================
 local PlayerGui = Player:WaitForChild("PlayerGui")
 local ExpText = PlayerGui
     :WaitForChild("Hud")
@@ -687,9 +642,6 @@ local function GetLevelInfo()
     return level, false
 end
 
--- =====================================================
--- AUTO REBIRTH
--- =====================================================
 local rebirthCooldown = 0
 
 -- Loop de Stats (PlayerExp a cada 30s)
@@ -719,9 +671,7 @@ task.spawn(function()
         task.wait(40)
     end
 end)
-=====================================================
--- SISTEMA ANTI-AFK
--- =====================================================
+
 -- Sistema que simula atividade a cada 10 minutos
 task.spawn(function()
     while task.wait(600) do -- 600 segundos = 10 minutos
@@ -735,8 +685,7 @@ end)
 Player.Idled:Connect(function()
     VU:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
     VU:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-    print("Anti-AFK: Kickar prevenido") end)
-    end
+    print("Anti-AFK: Kickar prevenido")
 end)
 
 RunService.Heartbeat:Connect(function(dt)
@@ -762,9 +711,6 @@ RunService.Heartbeat:Connect(function(dt)
     end
 end)
 
--- =====================================================
--- CASTLE VARIABLES
--- =====================================================
 local castleInfEnabled = false
 local autoCastleEnabled = false
 local castleCreateOnlyEnabled = false
@@ -783,9 +729,6 @@ local F2F3_INTERVALS = {
 local DELAY_F2_F3 = 1.5
 local castleSpeedEnabled = Settings.CastleSpeedEnabled
 
--- =====================================================
--- CASTLE FUNCTIONS
--- =====================================================
 local function pressKey(key)
     VIM:SendKeyEvent(true, key, false, game)
     task.wait(0.05)
@@ -937,9 +880,6 @@ local function farmCastleMobs()
     return mobsKilled
 end
 
--- =====================================================
--- CASTLE LOOPS
--- =====================================================
 local function castleInfLoop()
     task.spawn(function()
         while castleInfEnabled do
@@ -1119,9 +1059,6 @@ SectionCastleMain.CreateToggle({
     end
 end)
 
--- =====================================================
--- ISLANDS
--- =====================================================
 local SelectedIslandName = nil
 local IslandMap = {}
 local function GetWorld()
@@ -1193,9 +1130,6 @@ SectionIslandsMain.CreateButton({
     end
 end)
 
--- =====================================================
--- SETTINGS
--- =====================================================
 local SectionSettings = PageSettings.CreateSection("Config")
 
 SectionSettings.CreateLabel({
@@ -1262,9 +1196,6 @@ SectionSettings.CreateButton({
     game:GetService("TeleportService"):Teleport(game.PlaceId, Player)
 end)
 
--- =====================================================
--- NOTIFICAÇÃO FINAL
--- =====================================================
 Library.CreateNoti({
     Title = "Allan Hub V2",
     Desc = "Script carregado com sucesso!\nSistema de salvamento ativo\nRunas detectadas: " .. #AvailableRunes,
