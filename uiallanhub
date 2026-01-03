@@ -15,7 +15,7 @@ local IndexUIColor = {
 	["Border Color"] = Color3.fromRGB(168, 128, 255),
 	["Click Effect Color"] = Color3.fromRGB(230, 230, 230),
 	["Setting Icon Color"] = Color3.fromRGB(230, 230, 230),
-	["Logo Image"] = "rbxassetid://139680899478857",
+	["Logo Image"] = "rbxassetid://82772182045582",
 	["Search Icon Color"] = Color3.fromRGB(255, 255, 255),
 	["Search Icon Highlight Color"] = Color3.fromRGB(229, 204, 255),
 	["GUI Text Color"] = Color3.fromRGB(230, 230, 230),
@@ -430,7 +430,7 @@ function Library.CreateMain(Setting)
 	Ruafimg.BackgroundTransparency = 1.000
 	Ruafimg.Position = UDim2.new(0, 5, 0, cache.T1 and 5 or 0)
 	Ruafimg.Size = UDim2.new(0, cache.T1 and 30 or 25, 0, cache.T1 and 15 or 25)
-	Ruafimg.Image = "rbxassetid://139680899478857"
+	Ruafimg.Image = "rbxassetid://82772182045582"
 
 
 	TextLabelMain.Name = "TextLabelMain"
@@ -776,7 +776,7 @@ function Library.CreateMain(Setting)
 		SearchIcon.BackgroundTransparency = 1.000
 		SearchIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
 		SearchIcon.Size = UDim2.new(0, 16, 0, 16)
-		SearchIcon.Image = "rbxassetid://8154282545"
+		SearchIcon.Image = "rbxassetid://82772182045582"
 		SearchIcon.ImageColor3 = cache.UIColor["Search Icon Color"]
 
 		SearchButton.Name = "Search Button"
@@ -1029,7 +1029,7 @@ function Library.CreateMain(Setting)
 				visibility.Position = UDim2.new(0.5, 0, 0.5, 0)
 				visibility.Size = UDim2.new(1, -4, 1, -4)
 				visibility.ZIndex = 2
-				visibility.Image = "rbxassetid://3926307971"
+				visibility.Image = "rbxassetid://82772182045582"
 				visibility.ImageRectOffset = Vector2.new(84, 44)
 				visibility.ImageRectSize = Vector2.new(36, 36)
 				visibility.ImageTransparency = 1
@@ -1042,7 +1042,7 @@ function Library.CreateMain(Setting)
 				visibility_off.Position = UDim2.new(0.5, 0, 0.5, 0)
 				visibility_off.Size = UDim2.new(1, -4, 1, -4)
 				visibility_off.ZIndex = 2
-				visibility_off.Image = "rbxassetid://3926307971"
+				visibility_off.Image = "rbxassetid://82772182045582"
 				visibility_off.ImageRectOffset = Vector2.new(564, 44)
 				visibility_off.ImageRectSize = Vector2.new(36, 36)
 				visibility_off.ImageTransparency = 0
