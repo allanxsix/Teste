@@ -1426,7 +1426,7 @@ function Library.CreateMain(Setting)
 
 				noguchi_9.Enabled = true
 				noguchi_9.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0, 0), NumberSequenceKeypoint.new(1, 0, 0)})
-				noguchi_9.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.000, Color3.fromRGB(201, 0, 255)),ColorSequenceKeypoint.new(1.000, Color3.fromRGB(201, 0, 255))}
+				noguchi_9.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.000, Color3.fromRGB(64, 156, 255)),ColorSequenceKeypoint.new(1.000, Color3.fromRGB(64, 156, 255))}
 				noguchi_9.Offset = Vector2.new(0, 0)
 				noguchi_9.Rotation = 90
 
