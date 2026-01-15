@@ -2399,14 +2399,10 @@ L_1_[93] = {
 -- Criar seções para cada página
 L_1_[93]["InfoSection"] = L_1_[93]["Info"].CreateSection("Information")
 -- Discord/Info será adicionado via Label
-L_1_[93]["InfoSection"].CreateLabel({
-	Title = "Gravity Hub - Release Date [12/10/2025]"
-})
-L_1_[93]["InfoSection"].CreateLabel({
-	Title = "Discord: discord.gg/dvqDj9tum4"
-})
-L_1_[93]["Status ServerSection"] = L_1_[93]["Info"].CreateSection("Status Server")
-Time = L_1_[93]["InfoSection"].CreateLabel("Time Zone")
+L_1_[93]["InfoSection"].CreateLabel("Gravity Hub - Release Date [12/10/2025]")
+L_1_[93]["InfoSection"].CreateLabel("Discord: discord.gg/dvqDj9tum4")
+L_1_[93]["StatusServerSection"] = L_1_[93]["Info"].CreateSection("Status Server")
+Time = L_1_[93]["StatusServerSection"].CreateLabel("Time Zone")
 function UpdateOS()
 	local L_190_ = {}
 	L_190_[6] = os["date"]("*t")
@@ -2438,7 +2434,7 @@ spawn(function()
 		wait(1)
 	end
 end)
-Timmessss = L_1_[93]["InfoSection"].CreateLabel("Time")
+Timmessss = L_1_[93]["StatusServerSection"].CreateLabel("Time")
 function UpdateTime()
 	local L_191_ = {}
 	L_191_[1] = math["floor"](workspace["DistributedGameTime"] + .5)
@@ -2453,7 +2449,7 @@ spawn(function()
 		wait(1)
 	end
 end)
-Miragecheck = L_1_[93]["InfoSection"].CreateLabel("Mirage Island")
+Miragecheck = L_1_[93]["StatusServerSection"].CreateLabel("Mirage Island")
 L_1_[77] = ""
 spawn(function()
 	pcall(function()
@@ -2469,7 +2465,7 @@ spawn(function()
 		end
 	end)
 end)
-Kitsunecheck = L_1_[93]["InfoSection"].CreateLabel("Kitsune Island")
+Kitsunecheck = L_1_[93]["StatusServerSection"].CreateLabel("Kitsune Island")
 spawn(function()
 	local L_193_ = {}
 	L_193_[1] = ""
@@ -2482,7 +2478,7 @@ spawn(function()
 		end
 	end
 end)
-CPrehistoriccheck = L_1_[93]["InfoSection"].CreateLabel("Prehistoric Island")
+CPrehistoriccheck = L_1_[93]["StatusServerSection"].CreateLabel("Prehistoric Island")
 task["spawn"](function()
 	local L_195_ = {}
 	L_195_[2] = ""
@@ -2495,7 +2491,7 @@ task["spawn"](function()
 		end
 	end
 end)
-FrozenIsland = L_1_[93]["InfoSection"].CreateLabel("Frozen Dimension")
+FrozenIsland = L_1_[93]["StatusServerSection"].CreateLabel("Frozen Dimension")
 spawn(function()
 	local L_197_ = {}
 	L_197_[2] = ""
@@ -2508,7 +2504,7 @@ spawn(function()
 		end
 	end
 end)
-MobCakePrince = L_1_[93]["InfoSection"].CreateLabel("Dimension Killed")
+MobCakePrince = L_1_[93]["StatusServerSection"].CreateLabel("Dimension Killed")
 spawn(function()
 	while wait(1) do
 		local L_199_ = {}
@@ -2522,7 +2518,7 @@ spawn(function()
 		MobCakePrince:SetDesc(L_199_[3])
 	end
 end)
-CheckRip = L_1_[93]["InfoSection"].CreateLabel("Rip_Indra")
+CheckRip = L_1_[93]["StatusServerSection"].CreateLabel("Rip_Indra")
 spawn(function()
 	local L_201_ = {}
 	L_201_[2] = ""
@@ -2535,7 +2531,7 @@ spawn(function()
 		end
 	end
 end)
-CheckDoughKing = L_1_[93]["InfoSection"].CreateLabel("Dough King")
+CheckDoughKing = L_1_[93]["StatusServerSection"].CreateLabel("Dough King")
 spawn(function()
 	local L_203_ = {}
 	L_203_[1] = ""
@@ -2548,7 +2544,7 @@ spawn(function()
 		end
 	end
 end)
-EliteHunter = L_1_[93]["InfoSection"].CreateLabel("Elite Hunter")
+EliteHunter = L_1_[93]["StatusServerSection"].CreateLabel("Elite Hunter")
 spawn(function()
 	local L_205_ = {}
 	L_205_[1] = ""
@@ -2562,7 +2558,7 @@ spawn(function()
 		end
 	end
 end)
-FM = L_1_[93]["InfoSection"].CreateLabel("Full Moon")
+FM = L_1_[93]["StatusServerSection"].CreateLabel("Full Moon")
 task["spawn"](function()
 	while task["wait"](1) do
 		local L_207_ = {}
@@ -2602,7 +2598,7 @@ task["spawn"](function()
 		FM:SetDesc(L_207_[3])
 	end
 end)
-LegendarySword = L_1_[93]["InfoSection"].CreateLabel("Legendary Sword")
+LegendarySword = L_1_[93]["StatusServerSection"].CreateLabel("Legendary Sword")
 spawn(function()
 	local L_208_ = {}
 	L_208_[1] = ""
@@ -2622,7 +2618,7 @@ spawn(function()
 		LegendarySword:SetDesc(L_209_[1])
 	end
 end)
-StatusBone = L_1_[93]["InfoSection"].CreateLabel("Bone")
+StatusBone = L_1_[93]["StatusServerSection"].CreateLabel("Bone")
 spawn(function()
 	while wait(1) do
 		StatusBone:SetDesc("You Have: " .. (tostring((game:GetService("ReplicatedStorage"))["Remotes"]["CommF_"]:InvokeServer("Bones", "Check")) .. " Bones"))
