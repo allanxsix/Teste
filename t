@@ -270,9 +270,11 @@ if not success then
 end
 
 -- Aguarda a interface ser criada no CoreGui
+
 local mainFrame = nil
-for i = 1, 100 do
-	local gui = game:GetService("CoreGui"):FindFirstChild("CoinCard")
+local gui = nil
+for i = 1, 200 do -- aumenta o tempo de espera
+	gui = game:GetService("CoreGui"):FindFirstChild("CoinCard")
 	if gui and gui:FindFirstChild("DropShadowHolder") and gui.DropShadowHolder:FindFirstChild("Main") then
 		mainFrame = gui.DropShadowHolder.Main
 		break
@@ -284,6 +286,16 @@ if not mainFrame then
 	warn("Não foi possível localizar o MainFrame da interface base!")
 	return
 end
+
+-- Garante que CoinCard está habilitado e visível
+gui.Enabled = true
+mainFrame.Visible = true
+mainFrame.Parent.Visible = true
+mainFrame.Parent.Parent.Enabled = true
+
+-- Centraliza o frame na tela
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 
 -- Limpa filhos antigos do mainFrame (exceto UICorner/UIStroke)
 for _, v in pairs(mainFrame:GetChildren()) do
