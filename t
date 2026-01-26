@@ -271,9 +271,10 @@ end
 
 -- Aguarda a interface ser criada no CoreGui
 
+
 local mainFrame = nil
 local gui = nil
-for i = 1, 200 do -- aumenta o tempo de espera
+for i = 1, 200 do
 	gui = game:GetService("CoreGui"):FindFirstChild("CoinCard")
 	if gui and gui:FindFirstChild("DropShadowHolder") and gui.DropShadowHolder:FindFirstChild("Main") then
 		mainFrame = gui.DropShadowHolder.Main
@@ -287,11 +288,20 @@ if not mainFrame then
 	return
 end
 
--- Garante que CoinCard está habilitado e visível
+-- Garante que CoinCard está habilitado e visível ao iniciar
 gui.Enabled = true
 mainFrame.Visible = true
 mainFrame.Parent.Visible = true
-mainFrame.Parent.Parent.Enabled = true
+if gui:FindFirstChild("DropShadowHolder") and gui.DropShadowHolder:FindFirstChild("DropShadow") then
+	gui.DropShadowHolder.Visible = true
+	gui.DropShadowHolder.DropShadow.Visible = true
+end
+
+-- Se existir o botão de abrir/fechar, já deixa a interface aberta
+if gui.Parent and gui.Parent:FindFirstChild("Lonely Hub Btn") then
+	gui.Enabled = true
+	mainFrame.Visible = true
+end
 
 -- Centraliza o frame na tela
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
