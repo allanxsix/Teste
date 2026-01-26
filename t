@@ -254,32 +254,56 @@ task["spawn"](function()
 		shared["BC_2"] = true
 	end
 end)
-L_1_[43] = game:GetService("CoreGui")
-L_1_[6] = game:GetService("TweenService")
-
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"
+-- =====================================================
+-- LOAD UI RAW (LAYOUT DA FOTO)
+-- =====================================================
+loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"
 ))()
 
+-- =====================================================
+-- SERVICES
+-- =====================================================
+local CoreGui = game:GetService("CoreGui")
+
+-- =====================================================
+-- UI BASE
+-- =====================================================
 local CoinCard = CoreGui:WaitForChild("CoinCard")
 local Main = CoinCard:WaitForChild("DropShadowHolder"):WaitForChild("Main")
 
+-- =====================================================
+-- TITLES (IGUAL DA FOTO)
+-- =====================================================
+Main.Top.Text = "Lonely Stats Checker"
+Main.Under.Text = "Account Stats"
+Main.Under_2.Text = "Account Items"
+
+-- =====================================================
+-- STAT LABELS
+-- =====================================================
 local LevelLabel = Main:WaitForChild("LevelLabel")
 local RaceLabel  = Main:WaitForChild("RaceLabel")
 local BeliLabel  = Main:WaitForChild("BeliLabel")
 local FragLabel  = Main:WaitForChild("TextLabel_6")
 
-local ItemLabels = {
-    GodHuman           = Main:WaitForChild("TextLabel_1"),
-    SkullGuitar        = Main:WaitForChild("TextLabel_5"),
-    ValkyrieHelm       = Main:WaitForChild("TextLabel_3"),
-    MirrorFractal      = Main:WaitForChild("TextLabel_4"),
-    CurseDualKatana    = Main:WaitForChild("TextLabel_7"),
-    PullLever          = Main:WaitForChild("TextLabel_2"),
+-- =====================================================
+-- ITEM LABELS (BOLINHAS)
+-- =====================================================
+local Items = {
+    GodHuman        = Main:WaitForChild("TextLabel_1"),
+    SkullGuitar     = Main:WaitForChild("TextLabel_5"),
+    CurseDualKatana = Main:WaitForChild("TextLabel_7"),
+    ValkyrieHelm    = Main:WaitForChild("TextLabel_3"),
+    MirrorFractal   = Main:WaitForChild("TextLabel_4"),
+    PullLever       = Main:WaitForChild("TextLabel_2"),
 }
 
-
+-- =====================================================
+-- FUNÇÃO DE ATUALIZAÇÃO (MOSTRA TUDO DE UMA VEZ)
+-- =====================================================
 local function UpdateUI(data)
-  
+    -- Account Stats
     LevelLabel.Text = ("Level: %s    Third Sea : %s")
         :format(
             data.Level or "N/A",
@@ -290,26 +314,30 @@ local function UpdateUI(data)
     BeliLabel.Text = "Beli: " .. (data.Beli or "N/A")
     FragLabel.Text = "Frag: " .. (data.Frag or "N/A")
 
-    for itemName, label in pairs(ItemLabels) do
-        local hasItem = data.Items and data.Items[itemName]
-        label.Text = (hasItem and "🟢 " or "🔴 ") .. itemName:gsub("(%u)", " %1"):sub(2)
+    -- Account Items
+    for item, label in pairs(Items) do
+        local owned = data.Items and data.Items[item]
+        label.Text = (owned and "🟢 " or "🔴 ") .. label.Text:gsub("^[🟢🔴]%s*", "")
     end
 end
 
+-- =====================================================
+-- EXEMPLO (IGUAL DA FOTO)
+-- =====================================================
 UpdateUI({
-    Level = 2450,
-    Race = "Human V4",
-    Beli = "32,500,000",
-    Frag = "18,900",
-    ThirdSea = true,
+    Level = "N/A",
+    Race = "N/A",
+    Beli = "N/A",
+    Frag = "N/A",
+    ThirdSea = false,
 
     Items = {
-        GodHuman = true,
-        SkullGuitar = true,
-        ValkyrieHelm = false,
-        MirrorFractal = true,
+        GodHuman = false,
+        SkullGuitar = false,
         CurseDualKatana = false,
-        PullLever = true,
+        ValkyrieHelm = false,
+        MirrorFractal = false,
+        PullLever = false,
     }
 })
 
