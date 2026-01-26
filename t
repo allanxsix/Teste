@@ -310,6 +310,7 @@ end
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 
+
 -- Limpa filhos antigos do mainFrame (exceto UICorner/UIStroke)
 for _, v in pairs(mainFrame:GetChildren()) do
 	if not v:IsA("UICorner") and not v:IsA("UIStroke") then
@@ -317,6 +318,7 @@ for _, v in pairs(mainFrame:GetChildren()) do
 	end
 end
 
+-- Criação dos botões e layout igual à imagem, usando a interface carregada
 -- Título
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 36)
