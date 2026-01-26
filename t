@@ -1,60 +1,3 @@
-		local url = "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub.txt"
-local success, response = pcall(function()
-    return game:HttpGet(url)
-end)
-
-if success and response then
-    local loadedFunc, loadErr = loadstring(response)
-    if loadedFunc then
-        loadedFunc()
-        task.wait(1)
-        -- Atualiza informações na interface, se a função global existir
-        if type(updateStats) == "function" then
-            local player = game.Players.LocalPlayer
-            local data = player:WaitForChild("Data")
-            local level = data:FindFirstChild("Level") and data.Level.Value or "N/A"
-            local fragments = data:FindFirstChild("Fragments") and data.Fragments.Value or "N/A"
-            local beli = data:FindFirstChild("Beli") and data.Beli.Value or "N/A"
-            local race = data:FindFirstChild("Race") and data.Race.Value or "N/A"
-            local thirdSea = data:FindFirstChild("ThirdSea") and data.ThirdSea.Value or false
-            updateStats(level, fragments, beli, race, thirdSea)
-        end
-        -- Chame outras funções globais conforme necessário
-    else
-        warn("Erro ao carregar a interface: " .. tostring(loadErr))
-    end
-else
-    warn("Falha ao baixar a interface: " .. tostring(response))
-end
-local Main = Library.CreateMain({ Desc = " _ng.shinichi" })
-local Page = Main.CreatePage({ Page_Name = "Home", Page_Title = "Home" })
-local Section = Page.CreateSection("Status do Jogador")
-
--- Labels criados só aqui!
-local LevelLabel = Section.CreateLabel({ Title = "Level: N/A" })
-local ThirdSeaLabel = Section.CreateLabel({ Title = "Third Sea: ❌" })
-local BeliLabel = Section.CreateLabel({ Title = "Beli: N/A" })
-local FragLabel = Section.CreateLabel({ Title = "Frag: N/A" })
-local RaceLabel = Section.CreateLabel({ Title = "Race: N/A" })
-local StatusLabel = Section.CreateLabel({ Title = "Status: Aguardando..." })
-local TitleLabel = Section.CreateLabel({ Title = "Gravity Hub - Kaitun" })
-
-function updateStats(level, fragments, beli, race, thirdSea)
-    if LevelLabel then LevelLabel.SetText("Level: " .. tostring(level or "N/A")) end
-    if FragLabel then FragLabel.SetText("Frag: " .. tostring(fragments or "N/A")) end
-    if BeliLabel then BeliLabel.SetText("Beli: " .. tostring(beli or "N/A")) end
-    if RaceLabel then RaceLabel.SetText("Race: " .. tostring(race or "N/A")) end
-    if ThirdSeaLabel then ThirdSeaLabel.SetText("Third Sea: " .. (thirdSea and "✔️" or "❌")) end
-end
-
-function updateStatus(text)
-    if StatusLabel then StatusLabel.SetText("Status: " .. tostring(text or "")) end
-end
-
-function updateTitle(text)
-    if TitleLabel then TitleLabel.SetText(tostring(text or "")) end
-end
-
 local L_1_ = {}
 L_1_[3] = table["concat"]
 if not game:IsLoaded() then
@@ -310,6 +253,63 @@ task["spawn"](function()
 		shared["BC_2"] = true
 	end
 end)
+local url = "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub.txt"
+local success, response = pcall(function()
+    return game:HttpGet(url)
+end)
+
+if success and response then
+    local loadedFunc, loadErr = loadstring(response)
+    if loadedFunc then
+        loadedFunc()
+        task.wait(1)
+        -- Atualiza informações na interface, se a função global existir
+        if type(updateStats) == "function" then
+            local player = game.Players.LocalPlayer
+            local data = player:WaitForChild("Data")
+            local level = data:FindFirstChild("Level") and data.Level.Value or "N/A"
+            local fragments = data:FindFirstChild("Fragments") and data.Fragments.Value or "N/A"
+            local beli = data:FindFirstChild("Beli") and data.Beli.Value or "N/A"
+            local race = data:FindFirstChild("Race") and data.Race.Value or "N/A"
+            local thirdSea = data:FindFirstChild("ThirdSea") and data.ThirdSea.Value or false
+            updateStats(level, fragments, beli, race, thirdSea)
+        end
+        -- Chame outras funções globais conforme necessário
+    else
+        warn("Erro ao carregar a interface: " .. tostring(loadErr))
+    end
+else
+    warn("Falha ao baixar a interface: " .. tostring(response))
+end
+local Main = Library.CreateMain({ Desc = " _ng.shinichi" })
+local Page = Main.CreatePage({ Page_Name = "Home", Page_Title = "Home" })
+local Section = Page.CreateSection("Status do Jogador")
+
+-- Labels criados só aqui!
+local LevelLabel = Section.CreateLabel({ Title = "Level: N/A" })
+local ThirdSeaLabel = Section.CreateLabel({ Title = "Third Sea: ❌" })
+local BeliLabel = Section.CreateLabel({ Title = "Beli: N/A" })
+local FragLabel = Section.CreateLabel({ Title = "Frag: N/A" })
+local RaceLabel = Section.CreateLabel({ Title = "Race: N/A" })
+local StatusLabel = Section.CreateLabel({ Title = "Status: Aguardando..." })
+local TitleLabel = Section.CreateLabel({ Title = "Gravity Hub - Kaitun" })
+
+function updateStats(level, fragments, beli, race, thirdSea)
+    if LevelLabel then LevelLabel.SetText("Level: " .. tostring(level or "N/A")) end
+    if FragLabel then FragLabel.SetText("Frag: " .. tostring(fragments or "N/A")) end
+    if BeliLabel then BeliLabel.SetText("Beli: " .. tostring(beli or "N/A")) end
+    if RaceLabel then RaceLabel.SetText("Race: " .. tostring(race or "N/A")) end
+    if ThirdSeaLabel then ThirdSeaLabel.SetText("Third Sea: " .. (thirdSea and "✔️" or "❌")) end
+end
+
+function updateStatus(text)
+    if StatusLabel then StatusLabel.SetText("Status: " .. tostring(text or "")) end
+end
+
+function updateTitle(text)
+    if TitleLabel then TitleLabel.SetText(tostring(text or "")) end
+end
+
 L_1_[43] = game:GetService("CoreGui")
 if L_1_[30] == 2753915549 then
 	Old_World = true
