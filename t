@@ -6,156 +6,160 @@ if not game:IsLoaded() then
 		game["Loaded"]:Wait()
 	until game:IsLoaded()
 end;
-(getgenv())["Configs"] = {
-	["Quest"] = {
-		["Evo Race V1"] = true,
-		["Evo Race V2"] = true;
-		["RGB Haki"] = true,
-		["Pull Lerver"] = true
-	};
-	["Sword"] = {
-		"Dual-Headed Blade",
-		"Smoke Admiral",
-		"Wardens Sword",
-		"Cutlass",
-		"Katana";
-		"Dual Katana";
-		"Triple Katana",
-		"Iron Mace",
-		"Saber";
-		"Pole (1st Form)",
-		"Gravity Blade",
-		"Longsword";
-		"Rengoku";
-		"Midnight Blade",
-		"Soul Cane",
-		"Bisento",
-		"Yama";
-		"Tushita";
-		"Cursed Dual Katana"
-	};
-	["Gun"] = {
-		"Soul Guitar";
-		"Kabucha",
-		"Venom Bow",
-		"Musket";
-		"Flintlock",
-		"Refined Slingshot",
-		"Magma Blaster";
-		"Dual Flintlock",
-		"Cannon",
-		"Bizarre Revolver";
-		"Bazooka"
-	};
-	["FPS Booster"] = false
+
+-- CRIAÇÃO DA INTERFACE PRINCIPAL DIRETAMENTE AQUI
+local CoreGui = game:GetService("CoreGui")
+local CoinCard = Instance.new("ScreenGui")
+CoinCard.Name = "CoinCard"
+CoinCard.Parent = CoreGui
+CoinCard.ResetOnSpawn = false
+CoinCard.DisplayOrder = 20
+CoinCard.Enabled = true
+
+local DropShadowHolder = Instance.new("Frame")
+DropShadowHolder.Name = "DropShadowHolder"
+DropShadowHolder.Parent = CoinCard
+DropShadowHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadowHolder.BackgroundColor3 = Color3.fromRGB(163, 163, 163)
+DropShadowHolder.BackgroundTransparency = 1
+DropShadowHolder.BorderColor3 = Color3.fromRGB(27, 42, 53)
+DropShadowHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadowHolder.Size = UDim2.new(0, 500, 0, 320)
+DropShadowHolder.ZIndex = 1
+DropShadowHolder.Selectable = false
+DropShadowHolder.Visible = true
+
+local DropShadow = Instance.new("ImageLabel")
+DropShadow.Name = "DropShadow"
+DropShadow.Parent = DropShadowHolder
+DropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadow.BackgroundColor3 = Color3.fromRGB(163, 162, 165)
+DropShadow.BackgroundTransparency = 1
+DropShadow.BorderColor3 = Color3.fromRGB(27, 42, 53)
+DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadow.Size = UDim2.new(1, 47, 1, 47)
+DropShadow.ZIndex = 0
+DropShadow.Image = "rbxassetid://6015897843"
+DropShadow.ImageTransparency = 0.25
+DropShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Parent = DropShadowHolder
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Main.BackgroundTransparency = 0.15
+Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+Main.Size = UDim2.new(1, -47, 1, -47)
+Main.Visible = true
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = Main
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(255, 60, 60)
+UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+UIStroke.Parent = Main
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 36)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "Lonely Stats Checker"
+title.TextColor3 = Color3.fromRGB(255, 60, 60)
+title.TextSize = 22
+title.Font = Enum.Font.GothamBold
+title.TextYAlignment = Enum.TextYAlignment.Center
+title.Parent = Main
+
+-- Linha divisória
+local line = Instance.new("Frame")
+line.Size = UDim2.new(1, -20, 0, 2)
+line.Position = UDim2.new(0, 10, 0, 36)
+line.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+line.BorderSizePixel = 0
+line.Parent = Main
+
+-- Labels de coluna
+local statsLabel = Instance.new("TextLabel")
+statsLabel.Size = UDim2.new(0.5, -10, 0, 24)
+statsLabel.Position = UDim2.new(0, 10, 0, 46)
+statsLabel.BackgroundTransparency = 1
+statsLabel.Text = "Account Stats"
+statsLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
+statsLabel.TextSize = 18
+statsLabel.Font = Enum.Font.GothamBold
+statsLabel.TextXAlignment = Enum.TextXAlignment.Left
+statsLabel.Parent = Main
+
+local itemsLabel = Instance.new("TextLabel")
+itemsLabel.Size = UDim2.new(0.5, -10, 0, 24)
+itemsLabel.Position = UDim2.new(0.5, 0, 0, 46)
+itemsLabel.BackgroundTransparency = 1
+itemsLabel.Text = "Account Items"
+itemsLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
+itemsLabel.TextSize = 18
+itemsLabel.Font = Enum.Font.GothamBold
+itemsLabel.TextXAlignment = Enum.TextXAlignment.Left
+itemsLabel.Parent = Main
+
+-- Stats
+local stats = {
+	{"Level:", "N/A"},
+	{"Race:", "N/A"},
+	{"Beli:", "N/A"},
+	{"Frag:", "N/A"},
+	{"Third Sea:", "✗"}
 }
-wait(5)
-if game["Players"]["LocalPlayer"]["PlayerGui"]:FindFirstChild("Main (minimal)") then
-	if game["Players"]["LocalPlayer"]["PlayerGui"]["Main (minimal)"]:FindFirstChild("ChooseTeam") then
-		repeat
-			wait()
-			if (game["Players"]["LocalPlayer"]["PlayerGui"]:FindFirstChild("Main (minimal)"))["ChooseTeam"]["Visible"] then
-				(((game:GetService("ReplicatedStorage")):WaitForChild("Remotes")):WaitForChild("CommF_")):InvokeServer("SetTeam", "Pirates")
-			end
-		until game["Players"]["LocalPlayer"]["Team"] ~= nil and game:IsLoaded()
-	end
+for i, v in ipairs(stats) do
+	local stat = Instance.new("TextLabel")
+	stat.Size = UDim2.new(0.5, -10, 0, 22)
+	stat.Position = UDim2.new(0, 10, 0, 70 + (i-1)*24)
+	stat.BackgroundTransparency = 1
+	stat.Text = v[1] .. "  " .. v[2]
+	stat.TextColor3 = Color3.fromRGB(230, 230, 230)
+	stat.TextSize = 16
+	stat.Font = Enum.Font.Gotham
+	stat.TextXAlignment = Enum.TextXAlignment.Left
+	stat.Parent = Main
 end
-wait(5)
-if game["Players"]["LocalPlayer"]["PlayerGui"]:FindFirstChild("Main (minimal)") then
-	if game["Players"]["LocalPlayer"]["PlayerGui"]["Main (minimal)"]:FindFirstChild("ChooseTeam") then
-		repeat
-			wait()
-			if (game["Players"]["LocalPlayer"]["PlayerGui"]:FindFirstChild("Main (minimal)"))["ChooseTeam"]["Visible"] then
-				(((game:GetService("ReplicatedStorage")):WaitForChild("Remotes")):WaitForChild("CommF_")):InvokeServer("SetTeam", "Pirates")
-			end
-		until game["Players"]["LocalPlayer"]["Team"] ~= nil and game:IsLoaded()
-	end
+
+-- Itens
+local items = {
+	"GodHuman", "Curse Dual Katana", "Valkyrie Helm",
+	"Skull Guitar", "Mirror Fractal", "Pull Lever"
+}
+for i, v in ipairs(items) do
+	local itemFrame = Instance.new("Frame")
+	itemFrame.Size = UDim2.new(0, 180, 0, 22)
+	itemFrame.Position = UDim2.new(0.5, 10 + ((i-1)%3)*120, 0, 70 + math.floor((i-1)/3)*28)
+	itemFrame.BackgroundTransparency = 1
+	itemFrame.Parent = Main
+
+	local dot = Instance.new("Frame")
+	dot.Size = UDim2.new(0, 12, 0, 12)
+	dot.Position = UDim2.new(0, 0, 0.5, -6)
+	dot.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+	dot.BorderSizePixel = 0
+	local dotCorner = Instance.new("UICorner")
+	dotCorner.CornerRadius = UDim.new(1, 0)
+	dotCorner.Parent = dot
+	dot.Parent = itemFrame
+
+	local itemLabel = Instance.new("TextLabel")
+	itemLabel.Size = UDim2.new(1, -18, 1, 0)
+	itemLabel.Position = UDim2.new(0, 18, 0, 0)
+	itemLabel.BackgroundTransparency = 1
+	itemLabel.Text = v
+	itemLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+	itemLabel.TextSize = 15
+	itemLabel.Font = Enum.Font.Gotham
+	itemLabel.TextXAlignment = Enum.TextXAlignment.Left
+	itemLabel.Parent = itemFrame
 end
-L_1_[29] = game:GetService("Players")
-L_1_[5] = L_1_[29]["LocalPlayer"]
-L_1_[30] = game["PlaceId"]
-L_1_[19] = game:GetService("Workspace")
-L_1_[40] = L_1_[19]:WaitForChild("Enemies")
-L_1_[10] = game:GetService("TeleportService")
-L_1_[7] = game:GetService("ReplicatedStorage")
-L_1_[24] = (L_1_[5]:WaitForChild("Data")):WaitForChild("Level")
-L_1_[17] = (L_1_[5]:WaitForChild("Data")):WaitForChild("Fragments")
-L_1_[1] = (L_1_[5]:WaitForChild("Data")):WaitForChild("Beli")
-L_1_[48] = require(L_1_[7]["Modules"]["Net"])
-L_1_[16] = game:GetService("Lighting")
-L_1_[2] = game:service("VirtualInputManager")
-L_1_[33] = game:service("VirtualUser")
-L_1_[4] = game:GetService("CoreGui")
-L_1_[45] = {}
-task["spawn"](function()
-	if (getgenv())["Configs"] and (getgenv())["Configs"]["FPS Booster"] then
-		L_1_[7]["Effect"]:Destroy()
-		for L_2_forvar0, L_3_forvar1 in pairs(getconnections(L_1_[5]["PlayerGui"]["Main"]["Settings"]["Buttons"]["FastModeButton"]["Activated"])) do
-			local L_4_ = {}
-			L_4_[2], L_4_[3] = L_2_forvar0, L_3_forvar1
-			L_4_[3]["Function"]()
-		end
-	end
-end)
-wait(2)
-task["spawn"](function()
-	if (getgenv())["Configs"]["FPS Booster"] then
-		local L_5_ = {}
-		L_5_[3] = L_1_[19]:WaitForChild("Enemies")
-		L_5_[2] = (L_1_[19]:WaitForChild("Map")):GetDescendants()
-		for L_6_forvar0, L_7_forvar1 in ipairs(L_5_[2]) do
-			local L_8_ = {}
-			L_8_[2], L_8_[1] = L_6_forvar0, L_7_forvar1
-			if L_8_[1]:IsA("BasePart") then
-				local L_9_ = {}
-				L_9_[2] = false
-				for L_10_forvar0 = 1, 5, 1 do
-					local L_11_ = {}
-					L_11_[3] = L_10_forvar0
-					L_11_[1] = L_1_[19]["Map"]["Jungle"]["QuestPlates"]:FindFirstChild("Plate" .. L_11_[3])
-					if L_11_[1] and (L_8_[1]["Name"] == "Button" and L_8_[1]:IsDescendantOf(L_11_[1])) then
-						L_9_[2] = true
-						break
-					end
-				end
-				if L_9_[2] then
-					continue
-				end
-				if L_8_[1]["Name"] == "Door" and L_8_[1]:IsDescendantOf(L_1_[19]["Map"]["Ice"]) then
-					continue
-				end
-				if L_8_[1]:IsDescendantOf(L_1_[19]["Map"]["Jungle"]:FindFirstChild("Final")) then
-					continue
-				end
-				if L_1_[19]["Map"]:FindFirstChild("IceCastle") then
-					if L_8_[1]:IsDescendantOf(L_1_[19]["Map"]:FindFirstChild("IceCastle")) then
-						continue
-					end
-				end
-				L_9_[1] = true
-				for L_12_forvar0, L_13_forvar1 in ipairs(L_5_[3]:GetChildren()) do
-					local L_14_ = {}
-					L_14_[3], L_14_[1] = L_12_forvar0, L_13_forvar1
-					L_14_[2] = L_14_[1]:FindFirstChild("HumanoidRootPart")
-					if L_14_[2] and (L_14_[2]["Position"] - L_8_[1]["Position"])["Magnitude"] < 10 then
-						L_9_[1] = false
-						break
-					end
-				end
-				if L_9_[1] then
-					L_8_[1]:Destroy()
-				end
-			end
-		end
-		if L_1_[5]["PlayerGui"]:FindFirstChild("Notifications") then
-			L_1_[5]["PlayerGui"]["Notifications"]["Enabled"] = false
-		end
-		shared = shared or {}
-		if shared["BC_1"] == nil then
-			shared["BC_1"] = true
-		end
-		if shared["BC_1"] and shared["BC_2"] == nil then
-			local L_15_ = {}
 			L_15_[6] = workspace
 			L_15_[4] = L_1_[16]
 			L_15_[3] = L_15_[6]["Terrain"]
