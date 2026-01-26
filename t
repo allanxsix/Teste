@@ -256,35 +256,18 @@ task["spawn"](function()
 end)
 L_1_[43] = game:GetService("CoreGui")
 L_1_[6] = game:GetService("TweenService")
--- =====================================================
--- LOAD UI (RAW)
--- =====================================================
-loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"
 ))()
 
--- =====================================================
--- SERVICES
--- =====================================================
-local CoreGui = game:GetService("CoreGui")
-
--- =====================================================
--- UI REFERENCES
--- =====================================================
 local CoinCard = CoreGui:WaitForChild("CoinCard")
 local Main = CoinCard:WaitForChild("DropShadowHolder"):WaitForChild("Main")
 
--- =====================================================
--- STAT LABELS
--- =====================================================
 local LevelLabel = Main:WaitForChild("LevelLabel")
 local RaceLabel  = Main:WaitForChild("RaceLabel")
 local BeliLabel  = Main:WaitForChild("BeliLabel")
 local FragLabel  = Main:WaitForChild("TextLabel_6")
 
--- =====================================================
--- ITEM LABELS
--- =====================================================
 local ItemLabels = {
     GodHuman           = Main:WaitForChild("TextLabel_1"),
     SkullGuitar        = Main:WaitForChild("TextLabel_5"),
@@ -294,13 +277,9 @@ local ItemLabels = {
     PullLever          = Main:WaitForChild("TextLabel_2"),
 }
 
--- =====================================================
--- UPDATE FUNCTION (SUBSTITUI SUA UI ANTIGA)
--- =====================================================
+
 local function UpdateUI(data)
-    -- =====================
-    -- ACCOUNT STATS
-    -- =====================
+  
     LevelLabel.Text = ("Level: %s    Third Sea : %s")
         :format(
             data.Level or "N/A",
@@ -311,18 +290,12 @@ local function UpdateUI(data)
     BeliLabel.Text = "Beli: " .. (data.Beli or "N/A")
     FragLabel.Text = "Frag: " .. (data.Frag or "N/A")
 
-    -- =====================
-    -- ITEMS
-    -- =====================
     for itemName, label in pairs(ItemLabels) do
         local hasItem = data.Items and data.Items[itemName]
         label.Text = (hasItem and "🟢 " or "🔴 ") .. itemName:gsub("(%u)", " %1"):sub(2)
     end
 end
 
--- =====================================================
--- EXEMPLO DE USO (TESTE)
--- =====================================================
 UpdateUI({
     Level = 2450,
     Race = "Human V4",
