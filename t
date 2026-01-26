@@ -256,7 +256,7 @@ end)
 -- =====================================================
 -- LOAD UI RAW (SEM LIBRARY)
 -- =====================================================
-local url = "https://raw.githubusercontent.com/allanxsix/Teste/main/uiallanhub.txt"
+local url = "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub.txt"
 
 local success, response = pcall(function()
     return game:HttpGet(url)
@@ -281,31 +281,19 @@ loadedFunc()
 local CoreGui = game:GetService("CoreGui")
 
 local CoinCard
-for i = 1, 200 do
+repeat
     CoinCard = CoreGui:FindFirstChild("CoinCard")
-    if CoinCard then break end
-    task.wait(0.05)
-end
-
-if not CoinCard then
-    warn("CoinCard não encontrado")
-    return
-end
+    task.wait()
+until CoinCard
 
 local Main
-for i = 1, 200 do
+repeat
     local holder = CoinCard:FindFirstChild("DropShadowHolder")
     if holder then
         Main = holder:FindFirstChild("Main")
-        if Main then break end
     end
-    task.wait(0.05)
-end
-
-if not Main then
-    warn("Main UI não encontrada")
-    return
-end
+    task.wait()
+until Main
 
 -- =====================================================
 -- UI REFERENCES
@@ -325,45 +313,52 @@ local Items = {
 }
 
 -- =====================================================
--- UPDATE FUNCTIONS
+-- UPDATE FUNCTIONS (SUBSTITUI TUDO DA LIBRARY)
 -- =====================================================
 function updateStats(level, fragments, beli, race, thirdSea)
     if LevelLabel then
-        LevelLabel.Text = ("Level: %s    Third Sea: %s")
+        LevelLabel.Text = ("Level: %s    Third Sea : %s")
             :format(level or "N/A", thirdSea and "✅" or "❌")
     end
-    if FragLabel then FragLabel.Text = "Frag: " .. (fragments or "N/A") end
-    if BeliLabel then BeliLabel.Text = "Beli: " .. (beli or "N/A") end
-    if RaceLabel then RaceLabel.Text = "Race: " .. (race or "N/A") end
+
+    if FragLabel then
+        FragLabel.Text = "Frag: " .. (fragments or "N/A")
+    end
+
+    if BeliLabel then
+        BeliLabel.Text = "Beli: " .. (beli or "N/A")
+    end
+
+    if RaceLabel then
+        RaceLabel.Text = "Race: " .. (race or "N/A")
+    end
 end
 
 function updateItems(itemTable)
     for name, label in pairs(Items) do
         if label then
             local owned = itemTable and itemTable[name]
-            label.Text =
-                (owned and "🟢 " or "🔴 ")
+            label.Text = (owned and "🟢 " or "🔴 ")
                 .. label.Text:gsub("^[🟢🔴]%s*", "")
         end
     end
 end
 
 -- =====================================================
--- AUTO LOAD PLAYER DATA
+-- AUTO LOAD PLAYER DATA (EXEMPLO REAL)
 -- =====================================================
 task.spawn(function()
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
-    local data = player:WaitForChild("Data", 10)
-    if not data then return end
+    local data = player:WaitForChild("Data")
 
-    updateStats(
-        data:FindFirstChild("Level") and data.Level.Value or "N/A",
-        data:FindFirstChild("Fragments") and data.Fragments.Value or "N/A",
-        data:FindFirstChild("Beli") and data.Beli.Value or "N/A",
-        data:FindFirstChild("Race") and data.Race.Value or "N/A",
-        data:FindFirstChild("ThirdSea") and data.ThirdSea.Value or false
-    )
+    local level = data:FindFirstChild("Level") and data.Level.Value or "N/A"
+    local fragments = data:FindFirstChild("Fragments") and data.Fragments.Value or "N/A"
+    local beli = data:FindFirstChild("Beli") and data.Beli.Value or "N/A"
+    local race = data:FindFirstChild("Race") and data.Race.Value or "N/A"
+    local thirdSea = data:FindFirstChild("ThirdSea") and data.ThirdSea.Value or false
+
+    updateStats(level, fragments, beli, race, thirdSea)
 end)
 
 L_1_[43] = game:GetService("CoreGui")
