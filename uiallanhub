@@ -1,4 +1,3 @@
-local Main = Library.CreateMain({ Desc = " _ng.shinichi" })
 local cache = {}
 --function cache
 --	return cache
