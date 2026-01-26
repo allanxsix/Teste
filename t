@@ -259,7 +259,8 @@ L_1_[6] = game:GetService("TweenService")
 
 
 -- Carrega a interface base do GitHub (raw)
-local success, uiModule = pcall(function()
+
+local success, _ = pcall(function()
 	return loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/ui"))()
 end)
 
@@ -268,16 +269,27 @@ if not success then
 	return
 end
 
--- Criação dos botões e layout igual à imagem, usando a interface carregada
-local mainFrame = uiModule and uiModule.MainFrame or nil
+-- Aguarda a interface ser criada no CoreGui
+local mainFrame = nil
+for i = 1, 100 do
+	local gui = game:GetService("CoreGui"):FindFirstChild("CoinCard")
+	if gui and gui:FindFirstChild("DropShadowHolder") and gui.DropShadowHolder:FindFirstChild("Main") then
+		mainFrame = gui.DropShadowHolder.Main
+		break
+	end
+	task.wait(0.05)
+end
+
 if not mainFrame then
-	warn("A interface base não retornou o MainFrame esperado!")
+	warn("Não foi possível localizar o MainFrame da interface base!")
 	return
 end
 
--- Limpa filhos antigos do mainFrame
+-- Limpa filhos antigos do mainFrame (exceto UICorner/UIStroke)
 for _, v in pairs(mainFrame:GetChildren()) do
-	v:Destroy()
+	if not v:IsA("UICorner") and not v:IsA("UIStroke") then
+		v:Destroy()
+	end
 end
 
 -- Título
