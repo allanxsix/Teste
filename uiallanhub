@@ -1,5 +1,4 @@
---Section.BackgroundColor3 = cache.UIColor["Background 3 Color"]
---Background 1 Color
+local Main = Library.CreateMain({ Desc = " _ng.shinichi" })
 local cache = {}
 --function cache
 --	return cache
