@@ -255,7 +255,7 @@ task["spawn"](function()
 	end
 end)
 -- Carregar a biblioteca UI
-local Library = loadstring(game:HttpGet("URL_DO_UI.TXT"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/tt"))()
 
 -- Criar interface
 local Window = Library.CreateMain({
