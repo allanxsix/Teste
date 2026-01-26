@@ -272,6 +272,7 @@ end
 -- Aguarda a interface ser criada no CoreGui
 
 
+
 local mainFrame = nil
 local gui = nil
 for i = 1, 200 do
@@ -288,7 +289,7 @@ if not mainFrame then
 	return
 end
 
--- Garante que CoinCard está habilitado e visível ao iniciar
+-- Força a interface principal a aparecer
 gui.Enabled = true
 mainFrame.Visible = true
 mainFrame.Parent.Visible = true
@@ -297,10 +298,12 @@ if gui:FindFirstChild("DropShadowHolder") and gui.DropShadowHolder:FindFirstChil
 	gui.DropShadowHolder.DropShadow.Visible = true
 end
 
--- Se existir o botão de abrir/fechar, já deixa a interface aberta
-if gui.Parent and gui.Parent:FindFirstChild("Lonely Hub Btn") then
-	gui.Enabled = true
-	mainFrame.Visible = true
+-- Remove qualquer função/conexão que tente esconder a interface ao iniciar
+for _, conn in ipairs(getconnections(gui:GetPropertyChangedSignal("Enabled"))) do
+	conn:Disable()
+end
+for _, conn in ipairs(getconnections(mainFrame:GetPropertyChangedSignal("Visible"))) do
+	conn:Disable()
 end
 
 -- Centraliza o frame na tela
