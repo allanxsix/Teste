@@ -255,9 +255,9 @@ task["spawn"](function()
 	end
 end)
 -- Carregar a biblioteca UI
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"))()
+local Library = loadstring(game:HttpGet("URL_DO_UI.TXT"))()
 
--- Criar janela
+-- Criar interface
 local Window = Library.CreateMain({
     Title = "Gravity Hub",
     Desc = "Kaitun Status Checker"
@@ -270,87 +270,138 @@ local MainPage = Window.CreatePage({
 
 -- ===== ACCOUNT STATS =====
 local AccountStats = MainPage.CreateSection("Account Stats", false, false)
-
 local LevelLabel = AccountStats.CreateLabel({Title = "Level: Loading..."})
 local RaceLabel = AccountStats.CreateLabel({Title = "Race: Loading..."})
 local BeliLabel = AccountStats.CreateLabel({Title = "Beli: Loading..."})
-local FragLabel = AccountStats.CreateLabel({Title = "Fragment: Loading..."})
-local SeaLabel = AccountStats.CreateLabel({Title = "Third Sea: Loading..."})
-
--- ===== ACCOUNT ITEMS =====
-local AccountItems = MainPage.CreateSection("Account Items", false, false)
-
-local Item1Label = AccountItems.CreateLabel({Title = "Item 1: Checking..."})
-local Item2Label = AccountItems.CreateLabel({Title = "Item 2: Checking..."})
-local Item3Label = AccountItems.CreateLabel({Title = "Item 3: Checking..."})
-
--- ===== FIGHTING STYLES =====
-local FightingStyles = MainPage.CreateSection("Fighting Styles", false, false)
-
-local GodHumanLabel = FightingStyles.CreateLabel({Title = "🔴 GodHuman"})
-local SkullGuitarLabel = FightingStyles.CreateLabel({Title = "🔴 Skull Guitar"})
-
--- ===== SWORDS =====
-local Swords = MainPage.CreateSection("Swords", false, false)
-
-local CDKLabel = Swords.CreateLabel({Title = "🔴 Curse Dual Katana"})
-local MirrorLabel = Swords.CreateLabel({Title = "🔴 Mirror Fractal"})
-
--- ===== ACCESSORIES =====
-local Accessories = MainPage.CreateSection("Accessories", false, false)
-
-local ValkyrieLabel = Accessories.CreateLabel({Title = "🔴 Valkyrie Helm"})
-local PullLeverLabel = Accessories.CreateLabel({Title = "🔴 Pull Lever"})
 
 -- ===== CURRENT STATUS =====
 local StatusSection = MainPage.CreateSection("Current Status", false, false)
-local StatusLabel = StatusSection.CreateLabel({Title = "Status: TBoy Roblox"})
+local StatusLabel = StatusSection.CreateLabel({Title = "Status: Initializing..."})
 
--- ===== FUNÇÃO PARA ATUALIZAR STATS =====
-local function UpdateStats()
-    -- Exemplo: pegando dados do player (você vai substituir com seus dados reais)
-    local player = game.Players.LocalPlayer
-    
-    -- Atualizar Account Stats
-    LevelLabel.SetText("Level: " .. (player.Data and player.Data.Level.Value or "N/A"))
-    RaceLabel.SetText("Race: " .. (player.Data and player.Data.Race.Value or "N/A"))
-    BeliLabel.SetText("Beli: " .. (player.Data and player.Data.Beli.Value or "0"))
-    FragLabel.SetText("Fragment: " .. (player.Data and player.Data.Fragments.Value or "0"))
-    
-    -- Verificar Third Sea
-    local isThirdSea = game.PlaceId == 7449423635
-    SeaLabel.SetText("Third Sea: " .. (isThirdSea and "✅" or "❌"))
-    
-    -- Atualizar Items (exemplo)
-    Item1Label.SetText("Item 1: " .. (player.Backpack:FindFirstChild("ItemName1") and "✅ Found" or "❌ Not Found"))
-    
-    -- Atualizar Fighting Styles
-    local hasGodHuman = player.Backpack:FindFirstChild("Combat") -- exemplo
-    GodHumanLabel.SetText((hasGodHuman and "🟢" or "🔴") .. " GodHuman")
-    
-    -- Atualizar Swords
-    local hasCDK = player.Backpack:FindFirstChild("Cursed Dual Katana")
-    CDKLabel.SetText((hasCDK and "🟢" or "🔴") .. " Curse Dual Katana")
-    
-    -- Atualizar Status
-    StatusLabel.SetText("Status: Running - TBoy Roblox")
-end
+-- ===== CONTROLES =====
+local ControlSection = MainPage.CreateSection("Controls", false, false)
 
--- Atualizar stats a cada 5 segundos
-task.spawn(function()
-    while task.wait(5) do
-        pcall(UpdateStats)
+local AutoFarmEnabled = false
+
+local AutoFarmToggle = ControlSection.CreateToggle({
+    Title = "Auto Farm",
+    Desc = "Enable automatic farming",
+    Default = false
+}, function(value)
+    AutoFarmEnabled = value
+    if value then
+        StatusLabel.SetText("Status: Auto Farming - TBoy Roblox")
+        StartAutoFarm()
+    else
+        StatusLabel.SetText("Status: Idle - TBoy Roblox")
+        StopAutoFarm()
     end
 end)
 
--- Atualizar pela primeira vez
-UpdateStats()
+-- ===== CARREGAR FUNÇÕES DO GITHUB =====
+local Functions = loadstring(game:HttpGet("URL_DO_SEU_SCRIPT_DE_FARM.LUA"))()
 
--- Notificação
+-- ===== FUNÇÃO DE AUTO START APÓS HOP =====
+local function AutoStartAfterHop()
+    -- Verificar se já estava farmando antes do hop
+    local wasAutoFarming = false
+    
+    -- Você pode salvar isso usando writefile/readfile
+    if isfile and readfile then
+        if isfile("GravityHub_AutoFarm.txt") then
+            local status = readfile("GravityHub_AutoFarm.txt")
+            wasAutoFarming = status == "true"
+        end
+    end
+    
+    -- Se estava farmando, reativar automaticamente
+    if wasAutoFarming then
+        task.wait(5) -- Esperar 5 segundos após carregar o servidor
+        AutoFarmToggle.SetStage(true) -- Ativar o toggle
+        StatusLabel.SetText("Status: Auto-Started After Hop - TBoy Roblox")
+        
+        Library.CreateNoti({
+            Title = "Gravity Hub",
+            Desc = "Auto Farm restarted after server hop!",
+            ShowTime = 5
+        })
+    end
+end
+
+-- ===== FUNÇÃO PARA INICIAR O FARM =====
+function StartAutoFarm()
+    StatusLabel.SetText("Status: Starting Farm - TBoy Roblox")
+    
+    -- Salvar estado
+    if writefile then
+        writefile("GravityHub_AutoFarm.txt", "true")
+    end
+    
+    -- Iniciar suas funções de farm
+    if Functions and Functions.StartFarm then
+        Functions.StartFarm()
+    end
+    
+    Library.CreateNoti({
+        Title = "Auto Farm",
+        Desc = "Farm started successfully!",
+        ShowTime = 3
+    })
+end
+
+-- ===== FUNÇÃO PARA PARAR O FARM =====
+function StopAutoFarm()
+    StatusLabel.SetText("Status: Stopping Farm - TBoy Roblox")
+    
+    -- Salvar estado
+    if writefile then
+        writefile("GravityHub_AutoFarm.txt", "false")
+    end
+    
+    -- Parar suas funções de farm
+    if Functions and Functions.StopFarm then
+        Functions.StopFarm()
+    end
+    
+    Library.CreateNoti({
+        Title = "Auto Farm",
+        Desc = "Farm stopped.",
+        ShowTime = 3
+    })
+end
+
+-- ===== ATUALIZAR STATS A CADA 5 SEGUNDOS =====
+task.spawn(function()
+    while task.wait(5) do
+        pcall(function()
+            local player = game.Players.LocalPlayer
+            
+            -- Atualizar stats
+            if player.Data then
+                LevelLabel.SetText("Level: " .. (player.Data.Level.Value or "N/A"))
+                RaceLabel.SetText("Race: " .. (player.Data.Race.Value or "N/A"))
+                BeliLabel.SetText("Beli: " .. (player.Data.Beli.Value or "0"))
+            end
+            
+            -- Atualizar status se estiver farmando
+            if AutoFarmEnabled then
+                StatusLabel.SetText("Status: Auto Farming - TBoy Roblox")
+            end
+        end)
+    end
+end)
+
+-- ===== AUTO START APÓS CARREGAR =====
+task.spawn(function()
+    task.wait(2) -- Esperar tudo carregar
+    AutoStartAfterHop()
+end)
+
+-- Notificação inicial
 Library.CreateNoti({
-    Title = "Gravity Hub",
-    Desc = "Status Checker loaded!\nStats updating every 5 seconds.",
-    ShowTime = 7
+    Title = "Gravity Hub - Kaitun",
+    Desc = "Script loaded successfully!\nChecking for auto-start...",
+    ShowTime = 5
 })
 if L_1_[30] == 2753915549 then
 	Old_World = true
