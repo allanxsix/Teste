@@ -256,7 +256,7 @@ end)
 -- =====================================================
 -- LOAD UI RAW (SEM LIBRARY)
 -- =====================================================
-local url = "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub.txt"
+local url = "https://github.com/allanxsix/Teste/blob/main/uiallanhub"
 
 local success, response = pcall(function()
     return game:HttpGet(url)
