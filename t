@@ -1,4 +1,29 @@
---DEOBFUSCATED BY _NYZLINH
+		local url = "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub.txt"
+		local success, response = pcall(function()
+			return game:HttpGet(url)
+		end)
+
+		if success and response then
+			local loadedFunc, loadErr = loadstring(response)
+			if loadedFunc then
+				loadedFunc()
+				-- Aguarda a interface ser criada
+				task.wait(1)
+				-- Atualiza informações na interface, se a função global existir
+				if type(updateStats) == "function" then
+					local player = game.Players.LocalPlayer
+					local data = player:WaitForChild("Data")
+					local level = data:FindFirstChild("Level") and data.Level.Value or "N/A"
+					local fragments = data:FindFirstChild("Fragments") and data.Fragments.Value or "N/A"
+					local beli = data:FindFirstChild("Beli") and data.Beli.Value or "N/A"
+					updateStats(level, fragments, beli)
+				end
+			else
+				warn("Erro ao carregar a interface: " .. tostring(loadErr))
+			end
+		else
+			warn("Falha ao baixar a interface: " .. tostring(response))
+		end
 local L_1_ = {}
 L_1_[3] = table["concat"]
 if not game:IsLoaded() then
@@ -254,104 +279,96 @@ task["spawn"](function()
 		shared["BC_2"] = true
 	end
 end)
-pcall(function()
-    loadstring(game:HttpGet(
-        "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"
-    ))()
-end)
-
--- =====================================================
--- SERVICES
--- =====================================================
-local CoreGui = game:GetService("CoreGui")
-
--- =====================================================
--- SAFE UI HOOK (NUNCA USA WaitForChild NO COREGUI)
--- =====================================================
-local CoinCard
-repeat
-    CoinCard = CoreGui:FindFirstChild("CoinCard")
-    task.wait()
-until CoinCard
-
-local Main
-repeat
-    local holder = CoinCard:FindFirstChild("DropShadowHolder")
-    if holder then
-        Main = holder:FindFirstChild("Main")
-    end
-    task.wait()
-until Main
-
--- =====================================================
--- UI REFERENCES
--- =====================================================
-local LevelLabel = Main:FindFirstChild("LevelLabel")
-local RaceLabel  = Main:FindFirstChild("RaceLabel")
-local BeliLabel  = Main:FindFirstChild("BeliLabel")
-local FragLabel  = Main:FindFirstChild("TextLabel_6")
-
-local Items = {
-    GodHuman        = Main:FindFirstChild("TextLabel_1"),
-    SkullGuitar     = Main:FindFirstChild("TextLabel_5"),
-    CurseDualKatana = Main:FindFirstChild("TextLabel_7"),
-    ValkyrieHelm    = Main:FindFirstChild("TextLabel_3"),
-    MirrorFractal   = Main:FindFirstChild("TextLabel_4"),
-    PullLever       = Main:FindFirstChild("TextLabel_2"),
-}
-
--- =====================================================
--- UPDATE UI FUNCTION (SUBSTITUI A UI ANTIGA)
--- =====================================================
-local function UpdateUI(data)
-    if LevelLabel then
-        LevelLabel.Text = ("Level: %s    Third Sea : %s")
-            :format(data.Level or "N/A", data.ThirdSea and "✅" or "❌")
-    end
-
-    if RaceLabel then
-        RaceLabel.Text = "Race: " .. (data.Race or "N/A")
-    end
-
-    if BeliLabel then
-        BeliLabel.Text = "Beli: " .. (data.Beli or "N/A")
-    end
-
-    if FragLabel then
-        FragLabel.Text = "Frag: " .. (data.Frag or "N/A")
-    end
-
-    if data.Items then
-        for name, label in pairs(Items) do
-            if label then
-                local owned = data.Items[name]
-                label.Text = (owned and "🟢 " or "🔴 ")
-                    .. label.Text:gsub("^[🟢🔴]%s*", "")
-            end
-        end
-    end
+L_1_[43] = game:GetService("CoreGui")
+L_1_[6] = game:GetService("TweenService")
+if L_1_[43]:FindFirstChild("Status_UI") then
+	L_1_[43]["Status_UI"]:Destroy()
 end
-
--- =====================================================
--- EXEMPLO INICIAL (REMOVE SE QUISER)
--- =====================================================
-UpdateUI({
-    Level = "N/A",
-    Race = "N/A",
-    Beli = "N/A",
-    Frag = "N/A",
-    ThirdSea = false,
-
-    Items = {
-        GodHuman = false,
-        SkullGuitar = false,
-        CurseDualKatana = false,
-        ValkyrieHelm = false,
-        MirrorFractal = false,
-        PullLever = false,
-    }
-})
-
+L_1_[11] = Instance["new"]("ScreenGui")
+L_1_[11]["Name"] = "Status_UI"
+L_1_[11]["ResetOnSpawn"] = false
+L_1_[11]["Parent"] = L_1_[43]
+L_1_[42] = Instance["new"]("Frame")
+L_1_[42]["Size"] = UDim2["new"](0, 420, 0, 70)
+L_1_[42]["Position"] = UDim2["new"](.5, 0, .07, 0)
+L_1_[42]["AnchorPoint"] = Vector2["new"](.5, 0)
+L_1_[42]["BackgroundColor3"] = Color3["fromRGB"](0, 0, 0)
+L_1_[42][L_1_[3]({
+	"BackgroundTransparen";
+	"cy"
+})] = .25
+L_1_[42]["BorderSizePixel"] = 3
+L_1_[42]["BorderColor3"] = Color3["fromRGB"](255, 220, 70)
+L_1_[42]["Parent"] = L_1_[11]
+L_1_[41] = Instance["new"]("UICorner")
+L_1_[41]["CornerRadius"] = UDim["new"](0, 6)
+L_1_[41]["Parent"] = L_1_[42]
+L_1_[12] = Instance["new"]("UIStroke")
+L_1_[12]["Thickness"] = 2
+L_1_[12]["Color"] = Color3["fromRGB"](255, 230, 120)
+L_1_[12]["ApplyStrokeMode"] = Enum["ApplyStrokeMode"]["Border"]
+L_1_[12]["Parent"] = L_1_[42]
+L_1_[15] = Instance["new"]("TextLabel")
+L_1_[15]["Size"] = UDim2["new"](1, -10, .5, 0)
+L_1_[15]["Position"] = UDim2["new"](.5, 0, 0, 5)
+L_1_[15]["AnchorPoint"] = Vector2["new"](.5, 0)
+L_1_[15][L_1_[3]({
+	"BackgroundTransparen",
+	"cy"
+})] = 1
+L_1_[15]["Text"] = "Gravity Hub - Kaitun"
+L_1_[15]["TextColor3"] = Color3["fromRGB"](255, 230, 120)
+L_1_[15]["TextSize"] = 18
+L_1_[15]["Font"] = Enum["Font"]["GothamBold"]
+L_1_[15]["TextXAlignment"] = Enum["TextXAlignment"]["Center"]
+L_1_[15]["TextYAlignment"] = Enum["TextYAlignment"]["Center"]
+L_1_[15]["Parent"] = L_1_[42]
+L_1_[26] = Instance["new"]("TextLabel")
+L_1_[26]["Size"] = UDim2["new"](1, -10, .5, 0)
+L_1_[26]["Position"] = UDim2["new"](.5, 0, .5, 0)
+L_1_[26]["AnchorPoint"] = Vector2["new"](.5, 0)
+L_1_[26][L_1_[3]({
+	"BackgroundTransparen";
+	"cy"
+})] = 1
+L_1_[26]["Text"] = "Status : TBoy Roblox"
+L_1_[26]["TextColor3"] = Color3["fromRGB"](255, 230, 120)
+L_1_[26]["TextSize"] = 16
+L_1_[26]["Font"] = Enum["Font"]["Gotham"]
+L_1_[26]["TextXAlignment"] = Enum["TextXAlignment"]["Center"]
+L_1_[26]["TextYAlignment"] = Enum["TextYAlignment"]["Center"]
+L_1_[26]["Parent"] = L_1_[42]
+task["spawn"](function()
+	while task["wait"]() do
+		local L_27_ = {}
+		L_27_[4] = L_1_[6]:Create(L_1_[12], TweenInfo["new"](1.2, Enum["EasingStyle"]["Quad"], Enum["EasingDirection"]["Out"]), {
+			["Color"] = Color3["fromRGB"](255, 255, 180)
+		})
+		L_27_[5] = L_1_[6]:Create(L_1_[12], TweenInfo["new"](1.2, Enum["EasingStyle"]["Quad"], Enum["EasingDirection"]["Out"]), {
+			["Color"] = Color3["fromRGB"](255, 200, 60)
+		})
+		L_27_[2] = L_1_[6]:Create(L_1_[15], TweenInfo["new"](1.2), {
+			["TextColor3"] = Color3["fromRGB"](255, 255, 180)
+		})
+		L_27_[3] = L_1_[6]:Create(L_1_[15], TweenInfo["new"](1.2), {
+			["TextColor3"] = Color3["fromRGB"](255, 200, 60)
+		})
+		L_27_[1] = L_1_[6]:Create(L_1_[26], TweenInfo["new"](1.2), {
+			["TextColor3"] = Color3["fromRGB"](255, 255, 180)
+		})
+		L_27_[7] = L_1_[6]:Create(L_1_[26], TweenInfo["new"](1.2), {
+			["TextColor3"] = Color3["fromRGB"](255, 200, 60)
+		})
+		L_27_[4]:Play()
+		L_27_[2]:Play()
+		L_27_[1]:Play()
+		L_27_[4]["Completed"]:Wait()
+		L_27_[5]:Play()
+		L_27_[3]:Play()
+		L_27_[7]:Play()
+		L_27_[5]["Completed"]:Wait()
+	end
+end)
 if L_1_[30] == 2753915549 then
 	Old_World = true
 elseif L_1_[30] == 4442272183 then
