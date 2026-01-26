@@ -8,7 +8,7 @@ local HttpService = game:GetService("HttpService")
 --====================================================
 -- CONFIG
 --====================================================
-local RAW_URL = "https://raw.githubusercontent.com/SEUUSER/SEUREPO/main/stats.lua"
+local RAW_URL = "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/tt"
 
 --====================================================
 -- LOAD FUNCTIONS (RAW GITHUB)
