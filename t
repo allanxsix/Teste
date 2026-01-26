@@ -256,135 +256,90 @@ task["spawn"](function()
 end)
 L_1_[43] = game:GetService("CoreGui")
 L_1_[6] = game:GetService("TweenService")
+-- =====================================================
+-- LOAD UI (RAW)
+-- =====================================================
+loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"
+))()
 
--- Remove UI antiga se existir
-if L_1_[43]:FindFirstChild("Status_UI") then
-	L_1_[43]["Status_UI"]:Destroy()
-end
+-- =====================================================
+-- SERVICES
+-- =====================================================
+local CoreGui = game:GetService("CoreGui")
 
--- Criação da nova UI baseada na imagem
-local ui = Instance.new("ScreenGui")
-ui.Name = "Status_UI"
-ui.ResetOnSpawn = false
-ui.Parent = L_1_[43]
+-- =====================================================
+-- UI REFERENCES
+-- =====================================================
+local CoinCard = CoreGui:WaitForChild("CoinCard")
+local Main = CoinCard:WaitForChild("DropShadowHolder"):WaitForChild("Main")
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 500, 0, 320)
-mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-mainFrame.BackgroundTransparency = 0.15
-mainFrame.BorderSizePixel = 2
-mainFrame.BorderColor3 = Color3.fromRGB(255, 60, 60)
-mainFrame.Parent = ui
+-- =====================================================
+-- STAT LABELS
+-- =====================================================
+local LevelLabel = Main:WaitForChild("LevelLabel")
+local RaceLabel  = Main:WaitForChild("RaceLabel")
+local BeliLabel  = Main:WaitForChild("BeliLabel")
+local FragLabel  = Main:WaitForChild("TextLabel_6")
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
-corner.Parent = mainFrame
-
-local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
-stroke.Color = Color3.fromRGB(255, 60, 60)
-stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-stroke.Parent = mainFrame
-
--- Título
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 36)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "Lonely Stats Checker"
-title.TextColor3 = Color3.fromRGB(255, 60, 60)
-title.TextSize = 22
-title.Font = Enum.Font.GothamBold
-title.TextYAlignment = Enum.TextYAlignment.Center
-title.Parent = mainFrame
-
--- Linha divisória
-local line = Instance.new("Frame")
-line.Size = UDim2.new(1, -20, 0, 2)
-line.Position = UDim2.new(0, 10, 0, 36)
-line.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-line.BorderSizePixel = 0
-line.Parent = mainFrame
-
--- Labels de coluna
-local statsLabel = Instance.new("TextLabel")
-statsLabel.Size = UDim2.new(0.5, -10, 0, 24)
-statsLabel.Position = UDim2.new(0, 10, 0, 46)
-statsLabel.BackgroundTransparency = 1
-statsLabel.Text = "Account Stats"
-statsLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
-statsLabel.TextSize = 18
-statsLabel.Font = Enum.Font.GothamBold
-statsLabel.TextXAlignment = Enum.TextXAlignment.Left
-statsLabel.Parent = mainFrame
-
-local itemsLabel = Instance.new("TextLabel")
-itemsLabel.Size = UDim2.new(0.5, -10, 0, 24)
-itemsLabel.Position = UDim2.new(0.5, 0, 0, 46)
-itemsLabel.BackgroundTransparency = 1
-itemsLabel.Text = "Account Items"
-itemsLabel.TextColor3 = Color3.fromRGB(255, 60, 60)
-itemsLabel.TextSize = 18
-itemsLabel.Font = Enum.Font.GothamBold
-itemsLabel.TextXAlignment = Enum.TextXAlignment.Left
-itemsLabel.Parent = mainFrame
-
--- Stats
-local stats = {
-	{"Level:", "N/A"},
-	{"Race:", "N/A"},
-	{"Beli:", "N/A"},
-	{"Frag:", "N/A"},
-	{"Third Sea:", "✗"}
+-- =====================================================
+-- ITEM LABELS
+-- =====================================================
+local ItemLabels = {
+    GodHuman           = Main:WaitForChild("TextLabel_1"),
+    SkullGuitar        = Main:WaitForChild("TextLabel_5"),
+    ValkyrieHelm       = Main:WaitForChild("TextLabel_3"),
+    MirrorFractal      = Main:WaitForChild("TextLabel_4"),
+    CurseDualKatana    = Main:WaitForChild("TextLabel_7"),
+    PullLever          = Main:WaitForChild("TextLabel_2"),
 }
-for i, v in ipairs(stats) do
-	local stat = Instance.new("TextLabel")
-	stat.Size = UDim2.new(0.5, -10, 0, 22)
-	stat.Position = UDim2.new(0, 10, 0, 70 + (i-1)*24)
-	stat.BackgroundTransparency = 1
-	stat.Text = v[1] .. "  " .. v[2]
-	stat.TextColor3 = Color3.fromRGB(230, 230, 230)
-	stat.TextSize = 16
-	stat.Font = Enum.Font.Gotham
-	stat.TextXAlignment = Enum.TextXAlignment.Left
-	stat.Parent = mainFrame
+
+-- =====================================================
+-- UPDATE FUNCTION (SUBSTITUI SUA UI ANTIGA)
+-- =====================================================
+local function UpdateUI(data)
+    -- =====================
+    -- ACCOUNT STATS
+    -- =====================
+    LevelLabel.Text = ("Level: %s    Third Sea : %s")
+        :format(
+            data.Level or "N/A",
+            data.ThirdSea and "✅" or "❌"
+        )
+
+    RaceLabel.Text = "Race: " .. (data.Race or "N/A")
+    BeliLabel.Text = "Beli: " .. (data.Beli or "N/A")
+    FragLabel.Text = "Frag: " .. (data.Frag or "N/A")
+
+    -- =====================
+    -- ITEMS
+    -- =====================
+    for itemName, label in pairs(ItemLabels) do
+        local hasItem = data.Items and data.Items[itemName]
+        label.Text = (hasItem and "🟢 " or "🔴 ") .. itemName:gsub("(%u)", " %1"):sub(2)
+    end
 end
 
--- Itens
-local items = {
-	"GodHuman", "Curse Dual Katana", "Valkyrie Helm",
-	"Skull Guitar", "Mirror Fractal", "Pull Lever"
-}
-for i, v in ipairs(items) do
-	local itemFrame = Instance.new("Frame")
-	itemFrame.Size = UDim2.new(0, 180, 0, 22)
-	itemFrame.Position = UDim2.new(0.5, 10 + ((i-1)%3)*120, 0, 70 + math.floor((i-1)/3)*28)
-	itemFrame.BackgroundTransparency = 1
-	itemFrame.Parent = mainFrame
+-- =====================================================
+-- EXEMPLO DE USO (TESTE)
+-- =====================================================
+UpdateUI({
+    Level = 2450,
+    Race = "Human V4",
+    Beli = "32,500,000",
+    Frag = "18,900",
+    ThirdSea = true,
 
-	local dot = Instance.new("Frame")
-	dot.Size = UDim2.new(0, 12, 0, 12)
-	dot.Position = UDim2.new(0, 0, 0.5, -6)
-	dot.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-	dot.BorderSizePixel = 0
-	local dotCorner = Instance.new("UICorner")
-	dotCorner.CornerRadius = UDim.new(1, 0)
-	dotCorner.Parent = dot
-	dot.Parent = itemFrame
+    Items = {
+        GodHuman = true,
+        SkullGuitar = true,
+        ValkyrieHelm = false,
+        MirrorFractal = true,
+        CurseDualKatana = false,
+        PullLever = true,
+    }
+})
 
-	local itemLabel = Instance.new("TextLabel")
-	itemLabel.Size = UDim2.new(1, -18, 1, 0)
-	itemLabel.Position = UDim2.new(0, 18, 0, 0)
-	itemLabel.BackgroundTransparency = 1
-	itemLabel.Text = v
-	itemLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
-	itemLabel.TextSize = 15
-	itemLabel.Font = Enum.Font.Gotham
-	itemLabel.TextXAlignment = Enum.TextXAlignment.Left
-	itemLabel.Parent = itemFrame
-end
 if L_1_[30] == 2753915549 then
 	Old_World = true
 elseif L_1_[30] == 4442272183 then
