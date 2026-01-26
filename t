@@ -256,8 +256,8 @@ end)
 -- =====================================================
 -- LOAD UI RAW (SEM LIBRARY)
 -- =====================================================
-local url = "https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub.txt"
-
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/allanxsix/Teste/refs/heads/main/uiallanhub"))()
+local Main = Library.CreateMain({ Desc = " _ng.shinichi" })
 local success, response = pcall(function()
     return game:HttpGet(url)
 end)
