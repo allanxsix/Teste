@@ -1414,8 +1414,15 @@ local function IsInsideLabyrinth()
     local main = workspace:FindFirstChild("__Main")
     if main then
         local world = main:FindFirstChild("__World")
-        if world and (world.Name == "InfiniteLabyrinth" or world.Name == "LabyrinthInfinite") then
-            return true
+        if world then
+            if world.Name == "InfiniteLabyrinth" or world.Name == "LabyrinthInfinite" then
+                return true
+            end
+            
+            local infLab = world:FindFirstChild("InfiniteLabyrinth") or world:FindFirstChild("LabyrinthInfinite")
+            if infLab and infLab:FindFirstChild("MapaCongelado") then
+                return true
+            end
         end
     end
 
